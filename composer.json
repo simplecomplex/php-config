@@ -1,0 +1,27 @@
+{
+    "name": "simplecomplex/config",
+    "type": "library",
+    "description": "Configuration exposed as PSR-16 Simple Cache implementation.",
+    "keywords": ["configuration", "PSR-16", "simple cache", "PHP"],
+    "homepage": "https://github.com/simplecomplex/php-config",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jacob Friis Mathiasen",
+            "email": "jacob.friis@simplecomplex.net"
+        }
+    ],
+    "require": {
+        "php": ">=7.0",
+        "psr/log": "^1.0",
+        "psr/simple-cache": "^1.0",
+        "simplecomplex/utils": "dev-develop",
+        "simplecomplex/cache": "dev-develop"
+    },
+    "autoload": {
+        "psr-4": {
+            "SimpleComplex\\Config\\": "src/",
+            "SimpleComplex\\Config\\Exception\\": "src/Exception/"
+        }
+    }
+}
