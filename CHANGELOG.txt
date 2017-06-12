@@ -1,0 +1,4 @@
+SimpleComplex/Config 1.x, 2017-06-13
+-----------------------------------
+- PSR-16 SimpleCache-like config interface.
+- Configuration using .ini files as source, and PSR-16 cache as store.

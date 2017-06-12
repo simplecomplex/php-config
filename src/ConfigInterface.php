@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
-
 /**
  * Like PSR-16 Simple Cache interface, except:
  * - no time-to-live; setters have no ttl argument
@@ -77,7 +76,7 @@ interface ConfigInterface
     public function getMultiple(/*iterable*/ $keys, $default = null) /*: iterable*/;
 
     /**
-     * Persists a set of key => value pairs in the cache, with an optional TTL.
+     * Persists a set of key => value pairs in the configuration store.
      *
      * @param iterable $values
      *
@@ -90,14 +89,9 @@ interface ConfigInterface
     public function setMultiple(/*iterable*/ $values) : bool;
 
     /**
-     * Determines whether an item is present in the cache.
+     * Determines whether an item is present in the configuration store.
      *
-     * NOTE: It is recommended that has() is only to be used for cache warming type purposes
-     * and not to be used within your live applications operations for get/set, as this method
-     * is subject to a race condition where your has() will return true and immediately after,
-     * another script can remove it making the state of your app out of date.
-     *
-     * @param string $key The cache item key.
+     * @param string $key
      *
      * @return bool
      *
