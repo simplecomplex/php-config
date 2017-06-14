@@ -23,6 +23,8 @@ use SimpleComplex\Config\Exception\ConfigurationException;
  */
 class IniFileConfig implements ConfigInterface
 {
+    // @todo: rename to IniNCacheConfig CachedIniConfig
+
     /**
      * Reference to first object instantiated via the getInstance() method,
      * no matter which parent/child class the method was/is called on.
@@ -427,6 +429,8 @@ class IniFileConfig implements ConfigInterface
         $dir_iterator = new \DirectoryIterator($path);
         foreach ($dir_iterator as $item) {
             if (!$item->isDot() && $item->getExtension() == 'ini') {
+
+                // @todo: require sectioned.
                 if ($this->keyMode == 'domainSectioned') {
                     // Check that the whole configuration begins with a [section].
                     $ini = file_get_contents($path . '/' . $item->getFilename());
