@@ -11,12 +11,17 @@ namespace SimpleComplex\Config;
 
 use SimpleComplex\Cache\CacheBroker;
 use SimpleComplex\Cache\CheckEmptyCacheInterface;
-use SimpleComplex\Cache\Exception\RuntimeException;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\ConfigurationException;
+use SimpleComplex\Config\Exception\RuntimeException;
 
 /**
- * Configuration using .ini files as source, and PSR-16 cache as store.
+ * Simple configuration using .ini files as source, and PSR-16 cache as store.
+ *
+ * A single instance is probably only usable for limited purposes.
+ * Multiple instances could be usable in a compartmented configuration strategy,
+ * where each instance only handles say a module/component's dedicated
+ * configuration.
  *
  * @package SimpleComplex\Config
  */
@@ -47,7 +52,7 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
     }
 
 
-    // ConfigInterface.----------------------------------------------------------
+    // ConfigInterface.---------------------------------------------------------
 
     /**
      * Fetches a configuration variable from cache.
@@ -73,7 +78,6 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
      * Key gets validated by this class prior to the underlying cache store's
      * validation, because the the cache store's validation may be more
      * forgiving than this class' ditto.
-     * For forwards compatibility key must conform with .ini file requirements.
      *
      * @param string $key
      * @param mixed $value
@@ -84,6 +88,8 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
      *      Bad key.
      * @throws \Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
+     * @throws RuntimeException
+     *      Cache store failed silently.
      */
     public function set(string $key, $value) : bool
     {
@@ -92,7 +98,14 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
                 'Arg key does not conform with .ini file and/or cache key requirements, key[' . $key . '].'
             );
         }
-        return $this->cacheStore->set($key, $value);
+        if (!$this->cacheStore->set($key, $value)) {
+            // Unlikely, but safer.
+            throw new RuntimeException(
+                'Underlying cache store type[' . get_class($this->cacheStore)
+                . '] failed to set cache item, key[' . $key . '].'
+            );
+        }
+        return true;
     }
 
     /**
@@ -104,10 +117,19 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
      *
      * @throws \Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
+     * @throws RuntimeException
+     *      Cache store failed silently.
      */
     public function delete(string $key) : bool
     {
-        return $this->cacheStore->delete($key);
+        if (!$this->cacheStore->delete($key)) {
+            // Unlikely, but safer.
+            throw new RuntimeException(
+                'Underlying cache store type[' . get_class($this->cacheStore)
+                . '] failed to delete cache item, key[' . $key . '].'
+            );
+        }
+        return true;
     }
 
     /**
@@ -147,7 +169,7 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
      *      Bad key.
      * @throws \Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
-     * @throws \SimpleComplex\Cache\Exception\RuntimeException
+     * @throws RuntimeException
      *      Cache store failed silently.
      */
     public function setMultiple(/*iterable*/ $values) : bool
@@ -251,6 +273,8 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
      *      Bad value of an arg options bucket.
      * @throws ConfigurationException
      *      Propagated. If pathBase or pathOverride doesn't exist or isn't directory.
+     * @throws RuntimeException
+     *      Cache store failed silently.
      * @throws \Throwable
      *      Propagated.
      */
@@ -284,6 +308,12 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
         );
 
         // Cache.
-        $this->cacheStore->setMultiple($collection);
+        if (!$this->cacheStore->setMultiple($collection)) {
+            // Unlikely, but safer.
+            throw new RuntimeException(
+                'Underlying cache store type[' . get_class($this->cacheStore)
+                . '] failed to set cache items loaded from .ini file(s).'
+            );
+        }
     }
 }

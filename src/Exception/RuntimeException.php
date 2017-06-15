@@ -10,6 +10,6 @@ namespace SimpleComplex\Config\Exception;
  *
  * @package SimpleComplex\Config
  */
-class InvalidArgumentException extends \InvalidArgumentException
+class RuntimeException extends \RuntimeException
 {
 }

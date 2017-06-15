@@ -9,15 +9,21 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
-use SimpleComplex\Utils\Utils;
 use SimpleComplex\Cache\CacheBroker;
 use SimpleComplex\Cache\CheckEmptyCacheInterface;
-use SimpleComplex\Cache\Exception\RuntimeException;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\ConfigurationException;
+use SimpleComplex\Config\Exception\RuntimeException;
 
 /**
- * Configuration using .ini files as source, and PSR-16 cache as store.
+ * Sectioned configuration using .ini files as source,
+ * and PSR-16 cache as store.
+ *
+ * Usable as single instance global configuration store.
+ *
+ * This implementation internally arranges sections as multi-dimensional arrays,
+ * but - as recommended - only exposes section children; not the section
+ * as a whole.
  *
  * @package SimpleComplex\Config
  */
@@ -27,7 +33,7 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      * Reference to first object instantiated via the getInstance() method,
      * no matter which parent/child class the method was/is called on.
      *
-     * @var IniConfig
+     * @var IniSectionedConfig
      */
     protected static $instance;
 
@@ -36,7 +42,7 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      *
      * @param mixed ...$constructorParams
      *
-     * @return IniConfig
+     * @return IniSectionedConfig
      *      static, really, but IDE might not resolve that.
      */
     public static function getInstance(...$constructorParams)
@@ -48,12 +54,15 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
     }
 
 
-    // ConfigInterface.----------------------------------------------------------
+    // SectionedConfigInterface.------------------------------------------------
 
     /**
      * Fetches a configuration variable from cache.
      *
-     * Key validation relies solely on the underlying cache store's validation.
+     * Arg section only gets validated if retrieving from cache (not memory);
+     * and then solely by the underlying cache store's validation.
+     * Arg key doesn't get validated ever, because not strictly necessary;
+     * the set() method _does_ validate key.
      *
      * @param string $section
      * @param string $key
@@ -66,16 +75,26 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      */
     public function get(string $section, string $key, $default = null)
     {
-        return $this->cacheStore->get($section . static::CACHE_KEY_SECTION_DELIMITER . $key, $default);
+        return $this->memory[$section][$key] ?? (
+                $this->cacheStore->get($section, [])[$key] ?? $default
+            );
+        /*
+        if (isset($this->memory[$section][$key])) {
+            return $this->memory[$section][$key];
+        }
+        $arr = $this->cacheStore->get($section);
+        // ~ If array; checking for array type should nornally be redundant.
+        return $arr !== null && isset($arr[$key]) ? $arr[$key] :
+            $default;
+        */
     }
 
     /**
      * Sets a configuration variable; in cache, not .ini file.
      *
-     * Key gets validated by this class prior to the underlying cache store's
-     * validation, because the the cache store's validation may be more
-     * forgiving than this class' ditto.
-     * For forwards compatibility key must conform with .ini file requirements.
+     * Section and key get validated by this class prior to the underlying
+     * cache store's validation, because the the cache store's validation may
+     * be more forgiving than this class' ditto.
      *
      * @param string $section
      * @param string $key
@@ -87,31 +106,92 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      *      Bad key.
      * @throws \Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
+     * @throws RuntimeException
+     *      Cache store failed silently.
      */
     public function set(string $section, string $key, $value) : bool
     {
+        if (!$this->keyValidate($section)) {
+            throw new InvalidArgumentException(
+                'Arg section does not conform with .ini file and/or cache key requirements, section[' . $section . '].'
+            );
+        }
         if (!$this->keyValidate($key)) {
             throw new InvalidArgumentException(
                 'Arg key does not conform with .ini file and/or cache key requirements, key[' . $key . '].'
             );
         }
-        return $this->cacheStore->set($key, $value);
+        /**
+         * @see SectionedConfigInterface::remember()
+         */
+        unset($this->memory[$section]);
+
+        $arr = $this->cacheStore->get($section, []);
+        $arr[$key] = $value;
+        // Save to cache.
+        if (!$this->cacheStore->set($section, $arr)) {
+            throw new RuntimeException(
+                'Underlying cache store type[' . get_class($this->cacheStore)
+                . '] failed to set (save) section[' . $section . '].'
+            );
+        }
+        return true;
     }
 
     /**
      * Deletes a configuration variable; from cache, not .ini file.
+     *
+     * Also deletes the section, if arg key is the last remaining variable
+     * in the section.
      *
      * @param string $section
      * @param string $key
      *
      * @return bool
      *
+     * @throws InvalidArgumentException
+     *      Bad key.
      * @throws \Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
+     * @throws RuntimeException
+     *      Cache store failed silently.
      */
     public function delete(string $section, string $key) : bool
     {
-        return $this->cacheStore->delete($key);
+        if (!$this->keyValidate($section)) {
+            throw new InvalidArgumentException(
+                'Arg section does not conform with .ini file and/or cache key requirements, section[' . $section . '].'
+            );
+        }
+        if (!$this->keyValidate($key)) {
+            throw new InvalidArgumentException(
+                'Arg key does not conform with .ini file and/or cache key requirements, key[' . $key . '].'
+            );
+        }
+        /**
+         * @see SectionedConfigInterface::remember()
+         */
+        unset($this->memory[$section]);
+
+        $arr = $this->cacheStore->get($section);
+        // ~ If array; checking for array type should nornally be redundant.
+        if ($arr !== null) {
+            unset($arr[$key]);
+            if (!$arr) {
+                if (!$this->cacheStore->delete($section)) {
+                    throw new RuntimeException(
+                        'Underlying cache store type[' . get_class($this->cacheStore)
+                        . '] failed to delete section[' . $section . '].'
+                    );
+                }
+            } elseif (!$this->cacheStore->set($section, $arr)) {
+                throw new RuntimeException(
+                    'Underlying cache store type[' . get_class($this->cacheStore)
+                    . '] failed to set (save) section[' . $section . '].'
+                );
+            }
+        }
+        return true;
     }
 
     /**
@@ -135,7 +215,17 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
                 'Arg keys type[' . (!is_object($keys) ? gettype($keys) : get_class($keys)) . '] is not iterable.'
             );
         }
-        return $this->cacheStore->getMultiple($keys, $default);
+
+        $arr = $this->memory[$section] ?? $this->cacheStore->get($section);
+        // ~ If array; checking for array type should nornally be redundant.
+        if ($arr !== null) {
+            $values = [];
+            foreach ($keys as $key) {
+                $values[$key] = $arr[$key] ?? $default;
+            }
+            return $values;
+        }
+        return [];
     }
 
     /**
@@ -153,29 +243,44 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      *      Bad key.
      * @throws \Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
-     * @throws \SimpleComplex\Cache\Exception\RuntimeException
+     * @throws RuntimeException
      *      Cache store failed silently.
      */
     public function setMultiple(string $section, /*iterable*/ $values) : bool
     {
-        if (!is_array($values) && !is_a($values, \Traversable::class)) {
-            throw new \TypeError(
-                'Arg values type[' . (!is_object($values) ? gettype($values) : get_class($values)) . '] is not iterable.'
+        if (!$this->keyValidate($section)) {
+            throw new InvalidArgumentException(
+                'Arg section does not conform with .ini file and/or cache key requirements, section[' . $section . '].'
             );
         }
+        if (!is_array($values) && !is_a($values, \Traversable::class)) {
+            throw new \TypeError(
+                'Arg values type[' . (!is_object($values) ? gettype($values) : get_class($values))
+                . '] is not iterable.'
+            );
+        }
+
+        /**
+         * @see SectionedConfigInterface::remember()
+         */
+        unset($this->memory[$section]);
+
+        $arr = $this->cacheStore->get($section, []);
         foreach ($values as $key => $value) {
             if (!$this->keyValidate($key)) {
                 throw new InvalidArgumentException(
-                    'An arg values key does not conform with .ini file and/or cache key requirements, key[' . $key . '].'
+                    'An arg values key does not conform with .ini file and/or cache key requirements, key['
+                    . $key . '].'
                 );
             }
-            if (!$this->cacheStore->set($key, $value)) {
-                // Unlikely, but safer.
-                throw new RuntimeException(
-                    'Underlying cache store type[' . get_class($this->cacheStore)
-                    . '] failed to set a cache item, key[' . $key . '].'
-                );
-            }
+            $arr[$key] = $value;
+        }
+        if (!$this->cacheStore->set($section, $arr)) {
+            // Unlikely, but safer.
+            throw new RuntimeException(
+                'Underlying cache store type[' . get_class($this->cacheStore)
+                . '] failed to set section[' . $section . '].'
+            );
         }
         return true;
     }
@@ -191,25 +296,30 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      */
     public function has(string $section, string $key) : bool
     {
-        return $this->cacheStore->has($key);
+        return isset($this->memory[$section]) ? isset($this->memory[$section][$key]) :
+            isset($this->cacheStore->get($section, [])[$key]);
     }
 
     /**
      * Load section into memory, to make subsequent getter calls read
      * from memory instead of physical store.
      *
-     * An implementation which internally can't/won't arrange items
-     * multi-dimensionally (and thus cannot load a section into memory)
-     * must return null.
+     * A subsequent call to a setting or deleting method using arg section
+     * will (for integrity reasons) immediately clear the section from memory.
      *
      * @param string $section
      *
-     * @return bool|null
+     * @return bool
      *      False: section doesn't exist.
-     *      Null: Not applicable.
      */
     public function remember(string $section) : bool
     {
+        $arr = $this->cacheStore->get($section);
+        // ~ If array; checking for array type should nornally be redundant.
+        if ($arr !== null) {
+            $this->memory[$section] =& $arr;
+            return true;
+        }
         return false;
     }
 
@@ -217,25 +327,16 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      * Flush section from memory, to relieve memory usage; and make subsequent
      * getter calls read from physical store.
      *
-     * Implementations which cannot do this, must ignore call.
-     *
      * @param string $section
      *
      * @return void
      */
     public function forget(string $section) /*: void*/
     {
-
+        unset($this->memory[$section]);
     }
 
     // Custom/business.--------------------------------------------------------
-
-    /**
-     * For the composite cache key; delimiter between section and key.
-     *
-     * @var string
-     */
-    const CACHE_KEY_SECTION_DELIMITER = '[.]';
 
     /**
      * Path to directory where base configuration .ini-files reside.
@@ -256,7 +357,7 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
     const PATH_OVERRIDE_DEFAULT = '../conf/ini/operations';
 
     /**
-     * Section configuration always uses [section]s of .ini file.
+     * Sectioned configuration always uses [section]s of .ini file.
      *
      * @var bool
      */
@@ -270,14 +371,17 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
     protected $cacheStore;
 
     /**
+     * @var array
+     */
+    protected $memory = [];
+
+    /**
      * Create or load configuration store.
      *
      * @uses CacheBroker::getStore()
      *
      * @param string $name
      * @param array $options {
-     *      @var string $keyMode = ''
-     *          Empty: class default (KEY_MODE_DEFAULT) rules.
      *      @var string $pathBase = ''
      *          Empty: class default (PATH_BASE_DEFAULT) rules.
      *      @var string $pathOverride = ''
@@ -309,35 +413,10 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
             );
         }
 
-        if (!empty($options['keyMode'])) {
-            if (!is_string($options['keyMode'])) {
-                throw new \TypeError('Arg options[keyMode] type['
-                    . (!is_object($options['keyMode']) ? gettype($options['keyMode']) :
-                        get_class($options['keyMode'])) . '] is not string.');
-            }
-            switch ($options['keyMode']) {
-                case 'domainSectioned':
-                case 'flat':
-                    $this->keyMode = $options['keyMode'];
-                    break;
-                default:
-                    throw new InvalidArgumentException(
-                        'Arg options[keyMode] must be domainSectioned|flat, saw[' . $options['keyMode'] . '].'
-                    );
-            }
-        } else {
-            $this->keyMode = static::KEY_MODE_DEFAULT;
-        }
-        if ($this->keyMode == 'domainSectioned') {
-            $this->keyDomainDelimiterLength = strlen(static::KEY_DOMAIN_DELIMITER);
-        }
-
         // Don't import from .ini-files if our cache store has items.
         if (!$this->cacheStore->empty()) {
             return;
         }
-
-        $this->utils = Utils::getInstance();
 
         // Resolve 'base' and 'override' .ini-file dirs, and parse their files.
         $collection = array_replace_recursive(
@@ -345,34 +424,13 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
             $this->findNParseIniFiles('pathOverride', $options, static::PATH_OVERRIDE_DEFAULT)
         );
 
-        // Flatten, using the key-domain-delimiter.
-        if ($this->keyMode == 'domainSectioned') {
-            $flattened = [];
-            $delimiter = static::KEY_DOMAIN_DELIMITER;
-            foreach ($collection as $section => $sub) {
-                foreach ($sub as $key => $value) {
-                    $flattened[$section . $delimiter . $key] = $value;
-                }
-            }
-            $collection =& $flattened;
-        }
-
         // Cache.
-        $this->cacheStore->setMultiple($collection);
-    }
-
-    /**
-     * @param string $sectionNKey
-     *
-     * @return bool
-     */
-    public function compositeKeyValidate(string $sectionNKey) : bool
-    {
-        $le = strlen($key);
-        if ($le < static::KEY_VALID_LENGTH['min'] || $le > static::KEY_VALID_LENGTH['max']) {
-            return false;
+        if (!$this->cacheStore->setMultiple($collection)) {
+            // Unlikely, but safer.
+            throw new RuntimeException(
+                'Underlying cache store type[' . get_class($this->cacheStore)
+                . '] failed to set cache items loaded from .ini file(s).'
+            );
         }
-        // Faster than a regular expression.
-        return !!ctype_alnum('A' . str_replace(static::KEY_VALID_NON_ALPHANUM, '', $key));
     }
 }

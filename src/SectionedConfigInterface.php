@@ -117,6 +117,9 @@ interface SectionedConfigInterface
      * Load section into memory, to make subsequent getter calls read
      * from memory instead of physical store.
      *
+     * A subsequent call to a setting or deleting method using arg section
+     * _must_ (for integrity reasons) immediately clear the section from memory.
+     *
      * An implementation which internally can't/won't arrange items
      * multi-dimensionally (and thus cannot load a section into memory)
      * must return null.
@@ -127,7 +130,7 @@ interface SectionedConfigInterface
      *      False: section doesn't exist.
      *      Null: Not applicable.
      */
-    public function remember(string $section) : bool;
+    public function remember(string $section) /*: ?bool*/;
 
     /**
      * Flush section from memory, to relieve memory usage; and make subsequent

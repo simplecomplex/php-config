@@ -23,10 +23,9 @@ class AbstractIniConfig
     /**
      * Legal non-alphanumeric characters of a key.
      *
-     * The only non-alphanumeric characters allowed in .ini file section
+     * The only non-alphanumeric characters allowed in .ini file sections
      * and variable names are hyphen, dot and underscore.
-     * And spaces - but spaces are not allowed here because they can make a lot
-     * of problems throughout a system.
+     * And spaces; but they're prone to cause havoc.
      *
      * For compatibility with caching, this validation must also meet
      * PSR-16 Simple Cache requirements.
@@ -46,6 +45,9 @@ class AbstractIniConfig
         '_'
     ];
 
+    /**
+     * @var int[]
+     */
     const KEY_VALID_LENGTH = [
         'min' => 2,
         'max' => 64,
@@ -130,7 +132,7 @@ class AbstractIniConfig
                     }
                     if (!preg_match('/^\[/', $ini)) {
                         throw new ConfigurationException(
-                            'In domainSectioned keyMode an .ini file must declare a [section] before flat vars, file['
+                            'Using source sections, an .ini file must declare a [section] before flat vars, file['
                             . $path . '/' . $item->getFilename() . '].'
                         );
                     }
