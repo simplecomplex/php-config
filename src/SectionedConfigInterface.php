@@ -139,5 +139,5 @@ interface SectionedConfigInterface
      *
      * @return void
      */
-    public function forget(string $section) /*:void*/;
+    public function forget(string $section) /*: void*/;
 }

@@ -23,7 +23,7 @@ use SimpleComplex\Config\Exception\ConfigurationException;
  */
 class IniFileConfig implements ConfigInterface
 {
-    // @todo: rename to IniNCacheConfig CachedIniConfig
+    // @todo: rename to IniNCacheConfig CachedIniConfig IniSectionedConfig
 
     /**
      * Reference to first object instantiated via the getInstance() method,
