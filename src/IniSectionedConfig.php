@@ -21,15 +21,13 @@ use SimpleComplex\Config\Exception\ConfigurationException;
  *
  * @package SimpleComplex\Config
  */
-class IniFileConfig implements ConfigInterface
+class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInterface
 {
-    // @todo: rename to IniNCacheConfig CachedIniConfig IniSectionedConfig
-
     /**
      * Reference to first object instantiated via the getInstance() method,
      * no matter which parent/child class the method was/is called on.
      *
-     * @var IniFileConfig
+     * @var IniConfig
      */
     protected static $instance;
 
@@ -38,7 +36,7 @@ class IniFileConfig implements ConfigInterface
      *
      * @param mixed ...$constructorParams
      *
-     * @return IniFileConfig
+     * @return IniConfig
      *      static, really, but IDE might not resolve that.
      */
     public static function getInstance(...$constructorParams)
@@ -57,19 +55,18 @@ class IniFileConfig implements ConfigInterface
      *
      * Key validation relies solely on the underlying cache store's validation.
      *
+     * @param string $section
      * @param string $key
      * @param mixed $default
      *
      * @return mixed|null
-     *      Environment vars are always string.
-     *      The default may be of any type.
      *
      * @throws \Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      */
-    public function get(string $key, $default = null)
+    public function get(string $section, string $key, $default = null)
     {
-        return $this->cacheStore->get($key, $default);
+        return $this->cacheStore->get($section . static::CACHE_KEY_SECTION_DELIMITER . $key, $default);
     }
 
     /**
@@ -80,6 +77,7 @@ class IniFileConfig implements ConfigInterface
      * forgiving than this class' ditto.
      * For forwards compatibility key must conform with .ini file requirements.
      *
+     * @param string $section
      * @param string $key
      * @param mixed $value
      *
@@ -90,11 +88,11 @@ class IniFileConfig implements ConfigInterface
      * @throws \Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      */
-    public function set(string $key, $value) : bool
+    public function set(string $section, string $key, $value) : bool
     {
         if (!$this->keyValidate($key)) {
             throw new InvalidArgumentException(
-                'Arg key does not conform with .ini file key requirements, key[' . $key . '].'
+                'Arg key does not conform with .ini file and/or cache key requirements, key[' . $key . '].'
             );
         }
         return $this->cacheStore->set($key, $value);
@@ -103,6 +101,7 @@ class IniFileConfig implements ConfigInterface
     /**
      * Deletes a configuration variable; from cache, not .ini file.
      *
+     * @param string $section
      * @param string $key
      *
      * @return bool
@@ -110,7 +109,7 @@ class IniFileConfig implements ConfigInterface
      * @throws \Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      */
-    public function delete(string $key) : bool
+    public function delete(string $section, string $key) : bool
     {
         return $this->cacheStore->delete($key);
     }
@@ -118,6 +117,7 @@ class IniFileConfig implements ConfigInterface
     /**
      * Obtains multiple config items by their unique keys, from cache.
      *
+     * @param string $section
      * @param iterable $keys
      * @param mixed $default
      *
@@ -128,7 +128,7 @@ class IniFileConfig implements ConfigInterface
      * @throws \Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      */
-    public function getMultiple(/*iterable*/ $keys, $default = null) : array
+    public function getMultiple(string $section, /*iterable*/ $keys, $default = null) : array
     {
         if (!is_array($keys) && !is_a($keys, \Traversable::class)) {
             throw new \TypeError(
@@ -141,6 +141,7 @@ class IniFileConfig implements ConfigInterface
     /**
      * Persists a set of key => value pairs; in the cache, not .ini file.
      *
+     * @param string $section
      * @param iterable $values
      *
      * @return bool
@@ -155,7 +156,7 @@ class IniFileConfig implements ConfigInterface
      * @throws \SimpleComplex\Cache\Exception\RuntimeException
      *      Cache store failed silently.
      */
-    public function setMultiple(/*iterable*/ $values) : bool
+    public function setMultiple(string $section, /*iterable*/ $values) : bool
     {
         if (!is_array($values) && !is_a($values, \Traversable::class)) {
             throw new \TypeError(
@@ -165,7 +166,7 @@ class IniFileConfig implements ConfigInterface
         foreach ($values as $key => $value) {
             if (!$this->keyValidate($key)) {
                 throw new InvalidArgumentException(
-                    'An arg values key does not conform with .ini file key requirements, key[' . $key . '].'
+                    'An arg values key does not conform with .ini file and/or cache key requirements, key[' . $key . '].'
                 );
             }
             if (!$this->cacheStore->set($key, $value)) {
@@ -183,82 +184,58 @@ class IniFileConfig implements ConfigInterface
      * Check if a configuration item is set; in cache store, not (necessarily)
      * in .ini file.
      *
+     * @param string $section
      * @param string $key
      *
      * @return bool
      */
-    public function has(string $key) : bool
+    public function has(string $section, string $key) : bool
     {
         return $this->cacheStore->has($key);
     }
 
     /**
-     * @return string
+     * Load section into memory, to make subsequent getter calls read
+     * from memory instead of physical store.
+     *
+     * An implementation which internally can't/won't arrange items
+     * multi-dimensionally (and thus cannot load a section into memory)
+     * must return null.
+     *
+     * @param string $section
+     *
+     * @return bool|null
+     *      False: section doesn't exist.
+     *      Null: Not applicable.
      */
-    public function keyDomainDelimiter() : string {
-        return static::KEY_DOMAIN_DELIMITER;
+    public function remember(string $section) : bool
+    {
+        return false;
     }
 
+    /**
+     * Flush section from memory, to relieve memory usage; and make subsequent
+     * getter calls read from physical store.
+     *
+     * Implementations which cannot do this, must ignore call.
+     *
+     * @param string $section
+     *
+     * @return void
+     */
+    public function forget(string $section) /*: void*/
+    {
+
+    }
 
     // Custom/business.--------------------------------------------------------
 
     /**
-     * Legal non-alphanumeric characters of a key,
-     * excluding a key-domain-delimiter.
-     *
-     * NB: Square brackets are only allowed in a key-domain-delimiter;
-     * actually a key-domain-delimiter MUST contain at least one square bracket.
-     *
-     * The only non-alphanumeric characters allowed in .ini file section
-     * and variable names are hyphen, dot and underscore.
-     * And spaces - but spaces are not allowed here because they can make a lot
-     * of problems throughout a system.
-     *
-     * PSR-16 requirements:
-     * - at least: a-zA-Z\d_.
-     * - not: {}()/\@:
-     * - length: >=2 <=64
-     *
-     * Do not override; not healthy.
-     *
-     * @var string[]
-     */
-    const KEY_VALID_NON_ALPHANUM = [
-        '-',
-        '.',
-        '_'
-    ];
-
-    /**
-     * Whether configuration is sectioned into configuration 'domains', or flat.
-     *
-     * Flat configuration
-     * ------------------
-     * All [section]s in .ini files will be ignored; all vars will be seen as
-     * 'flat' unordered items.
-     *
-     * Domain-sectioned configuation
-     * -----------------------------
-     * All .ini files must use sections - contain a [section] before first var.
-     * All vars will be parse into [section][key-domain-delimiter][var name]
-     * keys.
-     *
-     * Allowed values: domainSectioned|flat.
-     *
-     * @see IniFileConfig::keyDomainDelimiter()
+     * For the composite cache key; delimiter between section and key.
      *
      * @var string
      */
-    const KEY_MODE_DEFAULT = 'domainSectioned';
-
-    /**
-     * Domain-sectioned key mode only.
-     *
-     * For domain:key namespaced use. Delimiter between domain and key.
-     *
-     * @var string
-     */
-    const KEY_DOMAIN_DELIMITER = '[.]';
+    const CACHE_KEY_SECTION_DELIMITER = '[.]';
 
     /**
      * Path to directory where base configuration .ini-files reside.
@@ -279,16 +256,11 @@ class IniFileConfig implements ConfigInterface
     const PATH_OVERRIDE_DEFAULT = '../conf/ini/operations';
 
     /**
-     * Values: domainSectioned|flat.
+     * Section configuration always uses [section]s of .ini file.
      *
-     * @var string
+     * @var bool
      */
-    protected $keyMode;
-
-    /**
-     * @var int
-     */
-    protected $keyDomainDelimiterLength = 0;
+    protected $useSourceSections = true;
 
     /**
      * Config's cache store.
@@ -390,102 +362,17 @@ class IniFileConfig implements ConfigInterface
     }
 
     /**
-     * Resolves base and override paths, and parses all their .ini files.
-     *
-     * @param string $pathName
-     * @param array $options
-     * @param string $pathDefault
-     *
-     * @return array
-     *
-     * @throws \TypeError
-     *      Wrong type of arg options bucket.
-     * @throws ConfigurationException
-     *      If the path doesn't exist or isn't directory.
-     *      if keyMode is domainSectioned and an .ini file doesn't declare
-     *      a [section] before flat vars.
-     */
-    protected function findNParseIniFiles(string $pathName, array $options, string $pathDefault) : array
-    {
-        $utils = Utils::getInstance();
-        if (!empty($options[$pathName])) {
-            if (!is_string($options[$pathName])) {
-                throw new \TypeError('Arg options[' . $pathName . '] type['
-                    . (!is_object($options[$pathName]) ? gettype($options[$pathName]) :
-                        get_class($options[$pathName])) . '] is not string.');
-            }
-            $path = $utils->resolvePath($options[$pathName]);
-        } else {
-            $path = $utils->resolvePath($pathDefault);
-        }
-        if (!file_exists($path) || !is_dir($path)) {
-            throw new ConfigurationException(
-                $pathName . ' for configuration .ini files '
-                . (!file_exists($this->{$path}) ? 'does not exist' : 'is not a directory') . ', path[' . $path . '].'
-            );
-        }
-
-        $collection = [];
-        $dir_iterator = new \DirectoryIterator($path);
-        foreach ($dir_iterator as $item) {
-            if (!$item->isDot() && $item->getExtension() == 'ini') {
-
-                // @todo: require sectioned.
-                if ($this->keyMode == 'domainSectioned') {
-                    // Check that the whole configuration begins with a [section].
-                    $ini = file_get_contents($path . '/' . $item->getFilename());
-                    // Remove comments and leading empty lines.
-                    $ini = ltrim(
-                        preg_replace(
-                            '/\n;[^\n]+\n/m',
-                            "\n",
-                            "\n" . str_replace("\r", '', $ini)
-                        )
-                    );
-                    if (!trim($ini)) {
-                        continue;
-                    }
-                    if (!preg_match('/^\[/', $ini)) {
-                        throw new ConfigurationException(
-                            'In domainSectioned keyMode an .ini file must declare a [section] before flat vars, file['
-                            . $path . '/' . $item->getFilename() . '].'
-                        );
-                    }
-                    // Union; two files within same dir shouldn't declare the
-                    // the same vars.
-                    // But if they do, the latter will rule.
-                    $collection += $utils->parseIniString($ini, true, true);
-                } else {
-                    $collection += $utils->parseIniFile($path . '/' . $item->getFilename(), true, true);
-                }
-            }
-        }
-        return $collection;
-    }
-
-    /**
-     * @param string $key
+     * @param string $sectionNKey
      *
      * @return bool
      */
-    public function keyValidate(string $key) : bool
+    public function compositeKeyValidate(string $sectionNKey) : bool
     {
         $le = strlen($key);
-        if ($le < (2 + $this->keyDomainDelimiterLength) || $le > 64) {
+        if ($le < static::KEY_VALID_LENGTH['min'] || $le > static::KEY_VALID_LENGTH['max']) {
             return false;
         }
-
-        if ($this->keyMode == 'domainSectioned') {
-            // There can only - and must be - a single domain delimiter.
-            if (substr_count($key, static::KEY_DOMAIN_DELIMITER, 1) != 1) {
-                return false;
-            }
-            $haystack = str_replace(static::KEY_DOMAIN_DELIMITER, '', $key);
-        } else {
-            $haystack = $key;
-        }
-
         // Faster than a regular expression.
-        return !!ctype_alnum('A' . str_replace(static::KEY_VALID_NON_ALPHANUM, '', $haystack));
+        return !!ctype_alnum('A' . str_replace(static::KEY_VALID_NON_ALPHANUM, '', $key));
     }
 }

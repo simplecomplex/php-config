@@ -14,7 +14,6 @@ namespace SimpleComplex\Config;
  * - no time-to-live; setters have no ttl argument
  * - type declared key parameters
  * - requires no methods clear() and deleteMultiple()
- * - requires a keyDomainDelimiter() method
  *
  * @see \Psr\SimpleCache\CacheInterface
  *
@@ -99,13 +98,4 @@ interface ConfigInterface
      *   MUST be thrown if arg key string is not a legal value.
      */
     public function has(string $key) : bool;
-
-    /**
-     * For domain:key namespaced use.
-     *
-     * Delimiter between configuration domain and item key.
-     *
-     * @return string
-     */
-    public function keyDomainDelimiter() : string;
 }
