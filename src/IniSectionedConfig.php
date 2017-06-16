@@ -66,6 +66,7 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      *
      * @param string $section
      * @param string $key
+     *      Wildcard *: (arr) the whole section or empty; ignores arg default.
      * @param mixed $default
      *
      * @return mixed|null
@@ -75,6 +76,9 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      */
     public function get(string $section, string $key, $default = null)
     {
+        if ($key == '*') {
+            return $this->memory[$section] ?? $this->cacheStore->get($section, []);
+        }
         return $this->memory[$section][$key] ?? (
                 $this->cacheStore->get($section, [])[$key] ?? $default
             );

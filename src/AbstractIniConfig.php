@@ -95,6 +95,8 @@ class AbstractIniConfig
     {
         $utils = Utils::getInstance();
 
+        // @todo: must support finding in subfolders.
+
         if (!empty($options[$pathName])) {
             if (!is_string($options[$pathName])) {
                 throw new \TypeError('Arg options[' . $pathName . '] type['
