@@ -23,6 +23,8 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * where each instance only handles say a module/component's dedicated
  * configuration.
  *
+ * @property-read string $name
+ *
  * @package SimpleComplex\Config
  */
 class IniConfig extends AbstractIniConfig implements ConfigInterface
@@ -53,6 +55,8 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
 
 
     // ConfigInterface.---------------------------------------------------------
+
+    use PropertyNameTrait;
 
     /**
      * Fetches a configuration variable from cache.
@@ -280,7 +284,9 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
      */
     public function __construct(string $name, array $options = [])
     {
-        // We need a cache store, no matter what.
+        $this->name = $name;
+
+        /// We need a cache store, no matter what.
         $this->cacheStore = CacheBroker::getInstance()->getStore($name);
         // The cache store must have an empty() method.
         if (

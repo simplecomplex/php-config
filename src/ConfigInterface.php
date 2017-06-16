@@ -15,12 +15,19 @@ namespace SimpleComplex\Config;
  * - type declared key parameters
  * - requires no methods clear() and deleteMultiple()
  *
+ * Implementations must expose instance property 'name'.
+ *
  * @see \Psr\SimpleCache\CacheInterface
+ * @see PropertyNameTrait
+ *
+ * @property-read string $name
  *
  * @package SimpleComplex\Config
  */
 interface ConfigInterface
 {
+    //use PropertyNameTrait;
+
     /**
      * Fetches a value from the configuration store.
      *

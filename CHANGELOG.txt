@@ -1,4 +1,14 @@
+SimpleComplex/Config 1.x, 2017-06-16
+------------------------------------
+- Wrap simple config as sectioned config.
+  Enables classes using configuration to support SectionedConfigInterface
+  _and_ ConfigInterface transparently.
+
+SimpleComplex/Config 1.x, 2017-06-15
+------------------------------------
+- Sectioned configuration interface and implementation.
+
 SimpleComplex/Config 1.x, 2017-06-13
------------------------------------
+------------------------------------
 - PSR-16 SimpleCache-like config interface.
 - Configuration using .ini files as source, and PSR-16 cache as store.

@@ -24,10 +24,18 @@ namespace SimpleComplex\Config;
  * ii.  Convenience: shorter variable names.
  * iii. Performance: less i/o when retrieving multiple items of same 'family'.
  *
+ * Implementations must expose instance property 'name'.
+ *
+ * @see PropertyNameTrait
+ *
+ * @property-read string $name
+ *
  * @package SimpleComplex\Config
  */
 interface SectionedConfigInterface
 {
+    //use PropertyNameTrait;
+
     /**
      * Fetches a value from the configuration store.
      *

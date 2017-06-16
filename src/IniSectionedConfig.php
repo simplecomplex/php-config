@@ -56,6 +56,8 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
 
     // SectionedConfigInterface.------------------------------------------------
 
+    use PropertyNameTrait;
+
     /**
      * Fetches a configuration variable from cache.
      *
@@ -404,6 +406,8 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      */
     public function __construct(string $name, array $options = [])
     {
+        $this->name = $name;
+
         // We need a cache store, no matter what.
         $this->cacheStore = CacheBroker::getInstance()->getStore($name);
         // The cache store must have an empty() method.
