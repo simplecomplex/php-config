@@ -78,73 +78,103 @@ class SectionedWrapper implements SectionedConfigInterface
     }
 
     /**
+     * Arg string or key is allowed to be empty.
+     *
+     * @see SectionedConfigInterface::get()
+     *
      * @inheritdoc
      */
     public function get(string $section, string $key, $default = null)
     {
-        return $this->config->get($section . $this->sectionKeyDelimiter . $key, $default);
+        return $this->config->get($this->concat($section, $key), $default);
     }
 
     /**
+     * Arg string or key is allowed to be empty.
+     *
+     * @see SectionedConfigInterface::set()
+     *
      * @inheritdoc
      */
     public function set(string $section, string $key, $value) : bool
     {
-        return $this->config->set($section . $this->sectionKeyDelimiter . $key, $value);
+        return $this->config->set($this->concat($section, $key), $value);
     }
 
     /**
+     * Arg string or key is allowed to be empty.
+     *
+     * @see SectionedConfigInterface::delete()
+     *
      * @inheritdoc
      */
     public function delete(string $section, string $key) : bool
     {
-        return $this->config->delete($section . $this->sectionKeyDelimiter . $key);
+        return $this->config->delete($this->concat($section, $key));
     }
 
     /**
+     * Arg string or key is allowed to be empty.
+     *
+     * @see SectionedConfigInterface::getMultiple()
+     *
      * @inheritdoc
      */
     public function getMultiple(string $section, /*iterable*/ $keys, $default = null)
     {
         $sctnd = [];
         foreach ($keys as $key) {
-            $sctnd[] = $section . $this->sectionKeyDelimiter . $key;
+            $sctnd[] = $this->concat($section, $key);
         }
         return $this->config->getMultiple($sctnd, $default);
     }
 
     /**
+     * Arg string or key is allowed to be empty.
+     *
+     * @see SectionedConfigInterface::setMultiple()
+     *
      * @inheritdoc
      */
     public function setMultiple(string $section, /*iterable*/ $values) : bool
     {
         $sctnd = [];
         foreach ($values as $key => $value) {
-            $sctnd[$section . $this->sectionKeyDelimiter . $key] = $value;
+            $sctnd[$this->concat($section, $key)] = $value;
         }
         return $this->config->setMultiple($sctnd);
     }
 
     /**
+     * Arg string or key is allowed to be empty.
+     *
+     * @see SectionedConfigInterface::has()
+     *
      * @inheritdoc
      */
     public function has(string $section, string $key) : bool
     {
-        return $this->config->has($section . $this->sectionKeyDelimiter . $key);
+        return $this->config->has($this->concat($section, $key));
     }
 
     /**
      * Does nothing.
      *
+     * @see SectionedConfigInterface::remember()
+     *
      * @inheritdoc
+     *
+     * @return null
      */
-    public function remember(string $section) : null
+    public function remember(string $section)
     {
         return null;
     }
 
     /**
      * Does nothing.
+     *
+     * @see SectionedConfigInterface::forget()
      *
      * @inheritdoc
      */
@@ -215,5 +245,22 @@ class SectionedWrapper implements SectionedConfigInterface
         } else {
             $this->sectionKeyDelimiter = static::SECTION_KEY_DELIMITER;
         }
+    }
+
+    /**
+     * @param string $section
+     * @param string $key
+     *
+     * @return string
+     */
+    protected function concat(string $section, string $key)
+    {
+        if ($section === '') {
+            return $key;
+        }
+        if ($key === '') {
+            return $section;
+        }
+        return $section . $this->sectionKeyDelimiter . $key;
     }
 }

@@ -4,6 +4,7 @@ SimpleComplex/Config 1.x, 2017-06-16
   Enables classes using configuration to support SectionedConfigInterface
   _and_ ConfigInterface transparently.
 - Use ConfigKey::validate() for all name and key arguments.
+- Sectioned-wrapped enviroment var config class.
 
 SimpleComplex/Config 1.x, 2017-06-15
 ------------------------------------
