@@ -61,6 +61,8 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
     /**
      * Fetches a configuration variable from cache.
      *
+     * Supports the wildcard * for arg key; returning (copy) of a section.
+     *
      * Arg section only gets validated if retrieving from cache (not memory);
      * and then solely by the underlying cache store's validation.
      * Arg key doesn't get validated ever, because not strictly necessary;
@@ -295,13 +297,19 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      * Check if a configuration item is set; in cache store, not (necessarily)
      * in .ini file.
      *
+     * Supports the wildcard * for arg key; checking if a section exists.
+     *
      * @param string $section
+     *      Wildcard *: (arr) the whole section.
      * @param string $key
      *
      * @return bool
      */
     public function has(string $section, string $key) : bool
     {
+        if ($key == '*') {
+            return !!($this->memory[$section] ?? $this->cacheStore->get($section));
+        }
         return isset($this->memory[$section]) ? isset($this->memory[$section][$key]) :
             isset($this->cacheStore->get($section, [])[$key]);
     }

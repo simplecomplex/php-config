@@ -12,7 +12,7 @@ namespace SimpleComplex\Config;
 /**
  * Wrapped environment variable configuration object.
  *
- * @see EnvVarConfig
+ * @see EnvConfig
  *
  * @package SimpleComplex\Config
  */
@@ -50,6 +50,6 @@ class EnvSectionedConfig extends SectionedWrapper
      */
     public function __construct($name = 'environment')
     {
-        parent::__construct(EnvVarConfig::getInstance($name), '__');
+        parent::__construct(EnvConfig::getInstance($name), '__');
     }
 }

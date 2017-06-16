@@ -16,13 +16,13 @@ use SimpleComplex\Config\Exception\InvalidArgumentException;
  *
  * @package SimpleComplex\Config
  */
-class EnvVarConfig implements ConfigInterface
+class EnvConfig implements ConfigInterface
 {
     /**
      * Reference to first object instantiated via the getInstance() method,
      * no matter which parent/child class the method was/is called on.
      *
-     * @var EnvVarConfig
+     * @var EnvConfig
      */
     protected static $instance;
 
@@ -31,7 +31,7 @@ class EnvVarConfig implements ConfigInterface
      *
      * @param mixed ...$constructorParams
      *
-     * @return EnvVarConfig
+     * @return EnvConfig
      *      static, really, but IDE might not resolve that.
      */
     public static function getInstance(...$constructorParams)

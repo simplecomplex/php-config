@@ -44,6 +44,10 @@ interface SectionedConfigInterface
     /**
      * Fetches a value from the configuration store.
      *
+     * An implementation may support wildcard * for the get() method's key
+     * argument, and thus return the whole section as an iterable;
+     * but only as copy, not as reference.
+     *
      * @param string $section
      * @param string $key
      * @param mixed|null $default
@@ -115,6 +119,9 @@ interface SectionedConfigInterface
 
     /**
      * Determines whether an item is present in the configuration store.
+     *
+     * An implementation may support wildcard * for the has() method's key
+     * argument, and thus check if the section (as an iterable) exists.
      *
      * @param string $section
      * @param string $key

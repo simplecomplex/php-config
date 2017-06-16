@@ -80,6 +80,8 @@ class SectionedWrapper implements SectionedConfigInterface
     /**
      * Arg string or key is allowed to be empty.
      *
+     * Does _not_ support wildcard * for arg key.
+     *
      * @see SectionedConfigInterface::get()
      *
      * @inheritdoc
@@ -147,6 +149,8 @@ class SectionedWrapper implements SectionedConfigInterface
 
     /**
      * Arg string or key is allowed to be empty.
+     *
+     * Does _not_ support wildcard * for arg key.
      *
      * @see SectionedConfigInterface::has()
      *
