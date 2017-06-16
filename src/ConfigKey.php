@@ -17,7 +17,7 @@ use \SimpleComplex\Cache\CacheKey;
  * Stricter than cache key, to support .ini file format as configuration source.
  *
  * @code
- * use \SimpleComplex\Config\ConfigKey;
+ * use SimpleComplex\Config\ConfigKey;
  *
  * if (!ConfigKey::validate($key)) {
  *    throw new \InvalidArgumentException('Arg key is not valid, key[' . $key . '].');

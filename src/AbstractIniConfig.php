@@ -21,54 +21,6 @@ use SimpleComplex\Config\Exception\ConfigurationException;
 class AbstractIniConfig
 {
     /**
-     * Legal non-alphanumeric characters of a key.
-     *
-     * The only non-alphanumeric characters allowed in .ini file sections
-     * and variable names are hyphen, dot and underscore.
-     * And spaces; but they're prone to cause havoc.
-     *
-     * For compatibility with caching, this validation must also meet
-     * PSR-16 Simple Cache requirements.
-     *
-     * PSR-16 key requirements:
-     * - at least: a-zA-Z\d_.
-     * - not: {}()/\@:
-     * - length: >=2 <=64
-     *
-     * Do not override; not healthy.
-     *
-     * @var string[]
-     */
-    const KEY_VALID_NON_ALPHANUM = [
-        '-',
-        '.',
-        '_'
-    ];
-
-    /**
-     * @var int[]
-     */
-    const KEY_VALID_LENGTH = [
-        'min' => 2,
-        'max' => 64,
-    ];
-
-    /**
-     * @param string $key
-     *
-     * @return bool
-     */
-    public function keyValidate(string $key) : bool
-    {
-        $le = strlen($key);
-        if ($le < static::KEY_VALID_LENGTH['min'] || $le > static::KEY_VALID_LENGTH['max']) {
-            return false;
-        }
-        // Faster than a regular expression.
-        return !!ctype_alnum('A' . str_replace(static::KEY_VALID_NON_ALPHANUM, '', $key));
-    }
-
-    /**
      * Whether to use [section]s of .ini file, or ignore them.
      *
      * @var bool

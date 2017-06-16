@@ -97,7 +97,7 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
      */
     public function set(string $key, $value) : bool
     {
-        if (!$this->keyValidate($key)) {
+        if (!ConfigKey::validate($key)) {
             throw new InvalidArgumentException(
                 'Arg key does not conform with .ini file and/or cache key requirements, key[' . $key . '].'
             );
@@ -184,7 +184,7 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
             );
         }
         foreach ($values as $key => $value) {
-            if (!$this->keyValidate($key)) {
+            if (!ConfigKey::validate($key)) {
                 throw new InvalidArgumentException(
                     'An arg values key does not conform with .ini file and/or cache key requirements, key[' . $key . '].'
                 );
@@ -269,12 +269,13 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
      *      @var string $pathOverride
      *          Default/empty: class default (PATH_OVERRIDE_DEFAULT) rules.
      * }
+     * @throws InvalidArgumentException
+     *      Invalid arg name.
+     *      Bad value of an arg options bucket.
      * @throws \LogicException
      *      CacheBroker returns a cache store which has no empty() method.
      * @throws \TypeError
      *      Wrong type of an arg options bucket.
-     * @throws InvalidArgumentException
-     *      Bad value of an arg options bucket.
      * @throws ConfigurationException
      *      Propagated. If pathBase or pathOverride doesn't exist or isn't directory.
      * @throws RuntimeException
@@ -284,6 +285,9 @@ class IniConfig extends AbstractIniConfig implements ConfigInterface
      */
     public function __construct(string $name, array $options = [])
     {
+        if (!ConfigKey::validate($name)) {
+            throw new InvalidArgumentException('Arg name is not valid, name[' . $name . '].');
+        }
         $this->name = $name;
 
         /// We need a cache store, no matter what.

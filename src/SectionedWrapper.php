@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
-use \SimpleComplex\Config\ConfigKey;
 use \SimpleComplex\Config\Exception\InvalidArgumentException;
 
 /**
@@ -184,7 +183,7 @@ class SectionedWrapper implements SectionedConfigInterface
     protected $sectionKeyDelimiter;
 
     /**
-     * SectionedWrapper constructor.
+     * Wraps a simple config instance as sectioned config instance.
      *
      * @param ConfigInterface $config
      * @param string|null $sectionKeyDelimiter

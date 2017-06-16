@@ -117,12 +117,12 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      */
     public function set(string $section, string $key, $value) : bool
     {
-        if (!$this->keyValidate($section)) {
+        if (!ConfigKey::validate($section)) {
             throw new InvalidArgumentException(
                 'Arg section does not conform with .ini file and/or cache key requirements, section[' . $section . '].'
             );
         }
-        if (!$this->keyValidate($key)) {
+        if (!ConfigKey::validate($key)) {
             throw new InvalidArgumentException(
                 'Arg key does not conform with .ini file and/or cache key requirements, key[' . $key . '].'
             );
@@ -164,12 +164,12 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      */
     public function delete(string $section, string $key) : bool
     {
-        if (!$this->keyValidate($section)) {
+        if (!ConfigKey::validate($section)) {
             throw new InvalidArgumentException(
                 'Arg section does not conform with .ini file and/or cache key requirements, section[' . $section . '].'
             );
         }
-        if (!$this->keyValidate($key)) {
+        if (!ConfigKey::validate($key)) {
             throw new InvalidArgumentException(
                 'Arg key does not conform with .ini file and/or cache key requirements, key[' . $key . '].'
             );
@@ -254,7 +254,7 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      */
     public function setMultiple(string $section, /*iterable*/ $values) : bool
     {
-        if (!$this->keyValidate($section)) {
+        if (!ConfigKey::validate($section)) {
             throw new InvalidArgumentException(
                 'Arg section does not conform with .ini file and/or cache key requirements, section[' . $section . '].'
             );
@@ -273,7 +273,7 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
 
         $arr = $this->cacheStore->get($section, []);
         foreach ($values as $key => $value) {
-            if (!$this->keyValidate($key)) {
+            if (!ConfigKey::validate($key)) {
                 throw new InvalidArgumentException(
                     'An arg values key does not conform with .ini file and/or cache key requirements, key['
                     . $key . '].'
@@ -406,6 +406,9 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
      */
     public function __construct(string $name, array $options = [])
     {
+        if (!ConfigKey::validate($name)) {
+            throw new InvalidArgumentException('Arg name is not valid, name[' . $name . '].');
+        }
         $this->name = $name;
 
         // We need a cache store, no matter what.

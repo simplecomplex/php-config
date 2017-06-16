@@ -45,6 +45,8 @@ class EnvVarConfig implements ConfigInterface
 
     // ConfigInterface.----------------------------------------------------------
 
+    use PropertyNameTrait;
+
     /**
      * Fetches an environment variable.
      *
@@ -154,42 +156,17 @@ class EnvVarConfig implements ConfigInterface
     // Custom/business.---------------------------------------------------------
 
     /**
-     * Legal non-alphanumeric characters of a key.
+     * @param string $name
      *
-     * All non-alphanumerics get converted to underscore, so using any but
-     * underscore may be a bad idea.
+     * @throws InvalidArgumentException
+     *      Invalid arg name.
      */
-    const KEY_VALID_NON_ALPHANUM = [
-        '-',
-        '.',
-        '[',
-        ']',
-        '_'
-    ];
-
-    /**
-     * @var int[]
-     */
-    const KEY_VALID_LENGTH = [
-        'min' => 2,
-        'max' => 64,
-    ];
-
-    /**
-     * Checks that key is string, and that length and content is legal.
-     *
-     * @param string $key
-     *
-     * @return bool
-     */
-    public function keyValidate(string $key) : bool
+    public function __construct(string $name)
     {
-        $le = strlen($key);
-        if ($le < static::KEY_VALID_LENGTH['min'] || $le > static::KEY_VALID_LENGTH['max']) {
-            return false;
+        if (!ConfigKey::validate($name)) {
+            throw new InvalidArgumentException('Arg name is not valid, name[' . $name . '].');
         }
-        // Faster than a regular expression.
-        return !!ctype_alnum('A' . str_replace(static::KEY_VALID_NON_ALPHANUM, '', $key));
+        $this->name = $name;
     }
 
     /**
@@ -203,8 +180,8 @@ class EnvVarConfig implements ConfigInterface
      */
     public function keyConvert(string $key) : string
     {
-        $key = str_replace(static::KEY_VALID_NON_ALPHANUM, '_', $key);
-        if (!$this->keyValidate($key)) {
+        $key = str_replace(ConfigKey::VALID_NON_ALPHANUM, '_', $key);
+        if (!ConfigKey::validate($key)) {
             throw new InvalidArgumentException('Arg key contains invalid character(s).');
         }
         return $key;
