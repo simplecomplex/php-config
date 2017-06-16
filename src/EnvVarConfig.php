@@ -48,15 +48,15 @@ class EnvVarConfig implements ConfigInterface
     /**
      * Fetches an environment variable.
      *
-     * @throws InvalidArgumentException
-     *      Propagated. Implements \Psr\SimpleCache\InvalidArgumentException.
-     *
      * @param string $key
      * @param mixed $default
      *
      * @return mixed|null
      *      Environment vars are always string.
      *      The default may be of any type.
+     *
+     * @throws InvalidArgumentException
+     *      Propagated.
      */
     public function get(string $key, $default = null)
     {
@@ -103,6 +103,9 @@ class EnvVarConfig implements ConfigInterface
      * @return array
      *
      * @throws \TypeError
+     *      Arg keys no iterable.
+     * @throws InvalidArgumentException
+     *      Propagated.
      */
     public function getMultiple(/*iterable*/ $keys, $default = null) : array
     {
@@ -137,6 +140,9 @@ class EnvVarConfig implements ConfigInterface
      * @param string $key
      *
      * @return bool
+     *
+     * @throws InvalidArgumentException
+     *      Propagated.
      */
     public function has(string $key) : bool
     {
@@ -144,35 +150,29 @@ class EnvVarConfig implements ConfigInterface
         return getenv($k) !== false;
     }
 
-    /**
-     * For domain:key namespaced use. Delimiter between domain and key.
-     */
-    const KEY_DOMAIN_DELIMITER = '__';
-
-    /**
-     * @return string
-     */
-    public function keyDomainDelimiter() : string {
-        return static::KEY_DOMAIN_DELIMITER;
-    }
-
 
     // Custom/business.---------------------------------------------------------
+
     /**
      * Legal non-alphanumeric characters of a key.
      *
-     * These keys are selected because they would work in the most basic cache
-     * implementation; that is: file (dir names and filenames).
+     * All non-alphanumerics get converted to underscore, so using any but
+     * underscore may be a bad idea.
      */
     const KEY_VALID_NON_ALPHANUM = [
-        '(',
-        ')',
         '-',
         '.',
-        ':',
         '[',
         ']',
         '_'
+    ];
+
+    /**
+     * @var int[]
+     */
+    const KEY_VALID_LENGTH = [
+        'min' => 2,
+        'max' => 64,
     ];
 
     /**
@@ -185,7 +185,7 @@ class EnvVarConfig implements ConfigInterface
     public function keyValidate(string $key) : bool
     {
         $le = strlen($key);
-        if ($le < 2 || $le > 64) {
+        if ($le < static::KEY_VALID_LENGTH['min'] || $le > static::KEY_VALID_LENGTH['max']) {
             return false;
         }
         // Faster than a regular expression.
@@ -203,11 +203,8 @@ class EnvVarConfig implements ConfigInterface
      */
     public function keyConvert(string $key) : string
     {
-        if (!$key && $key === '') {
-            throw new InvalidArgumentException('Arg key is empty.');
-        }
         $key = str_replace(static::KEY_VALID_NON_ALPHANUM, '_', $key);
-        if (!ctype_alnum(str_replace('_', '', $key))) {
+        if (!$this->keyValidate($key)) {
             throw new InvalidArgumentException('Arg key contains invalid character(s).');
         }
         return $key;

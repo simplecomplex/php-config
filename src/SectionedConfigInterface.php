@@ -24,6 +24,11 @@ namespace SimpleComplex\Config;
  * ii.  Convenience: shorter variable names.
  * iii. Performance: less i/o when retrieving multiple items of same 'family'.
  *
+ * For cachability, sections and keys must conform with PSR-16 key requirements:
+ * - at least: a-zA-Z\d_.
+ * - not: {}()/\@:
+ * - length: >=2 <=64
+ *
  * Implementations must expose instance property 'name'.
  *
  * @see PropertyNameTrait

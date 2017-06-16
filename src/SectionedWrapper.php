@@ -9,11 +9,17 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
+use \SimpleComplex\Config\ConfigKey;
+use \SimpleComplex\Config\Exception\InvalidArgumentException;
+
 /**
  * Wraps a simple config instance as a sectioned config instance.
  *
  * Enables classes using configuration to support SectionedConfigInterface
  * _and_ ConfigInterface transparently.
+ *
+ * @property-read string $name
+ *      Name of internal ConfigInterface instance.
  *
  * @package SimpleComplex\Config
  */
@@ -47,11 +53,6 @@ class SectionedWrapper implements SectionedConfigInterface
     // SectionedConfigInterface.------------------------------------------------
 
     /**
-     * @var string
-     */
-    protected $name;
-
-    /**
      * @param mixed $name
      *
      * @return string
@@ -82,7 +83,7 @@ class SectionedWrapper implements SectionedConfigInterface
      */
     public function get(string $section, string $key, $default = null)
     {
-        return $this->config->get($section . static::SECTION_KEY_DELIMITER . $key, $default);
+        return $this->config->get($section . $this->sectionKeyDelimiter . $key, $default);
     }
 
     /**
@@ -90,7 +91,7 @@ class SectionedWrapper implements SectionedConfigInterface
      */
     public function set(string $section, string $key, $value) : bool
     {
-        return $this->config->set($section . static::SECTION_KEY_DELIMITER . $key, $value);
+        return $this->config->set($section . $this->sectionKeyDelimiter . $key, $value);
     }
 
     /**
@@ -98,7 +99,7 @@ class SectionedWrapper implements SectionedConfigInterface
      */
     public function delete(string $section, string $key) : bool
     {
-        return $this->config->delete($section . static::SECTION_KEY_DELIMITER . $key);
+        return $this->config->delete($section . $this->sectionKeyDelimiter . $key);
     }
 
     /**
@@ -108,7 +109,7 @@ class SectionedWrapper implements SectionedConfigInterface
     {
         $sctnd = [];
         foreach ($keys as $key) {
-            $sctnd[] = $section . static::SECTION_KEY_DELIMITER . $key;
+            $sctnd[] = $section . $this->sectionKeyDelimiter . $key;
         }
         return $this->config->getMultiple($sctnd, $default);
     }
@@ -120,7 +121,7 @@ class SectionedWrapper implements SectionedConfigInterface
     {
         $sctnd = [];
         foreach ($values as $key => $value) {
-            $sctnd[$section . static::SECTION_KEY_DELIMITER . $key] = $value;
+            $sctnd[$section . $this->sectionKeyDelimiter . $key] = $value;
         }
         return $this->config->setMultiple($sctnd);
     }
@@ -130,7 +131,7 @@ class SectionedWrapper implements SectionedConfigInterface
      */
     public function has(string $section, string $key) : bool
     {
-        return $this->config->has($section . static::SECTION_KEY_DELIMITER . $key);
+        return $this->config->has($section . $this->sectionKeyDelimiter . $key);
     }
 
     /**
@@ -155,20 +156,65 @@ class SectionedWrapper implements SectionedConfigInterface
 
     // Business.----------------------------------------------------------------
 
-    const SECTION_KEY_DELIMITER = '[.]';
+    /**
+     * Default delimiter between args section and key.
+     *
+     * PSR-16 Simple Cache forbids:
+     * {}()/\@:
+     *
+     * @var string
+     */
+    const SECTION_KEY_DELIMITER = '__';
 
     /**
+     * Internal simple config instance.
+     *
      * @var ConfigInterface
      */
     protected $config;
 
     /**
+     * Delimiter between args section and key.
+     *
+     * PSR-16 Simple Cache forbids:
+     * {}()/\@:
+     *
+     * @var string
+     */
+    protected $sectionKeyDelimiter;
+
+    /**
      * SectionedWrapper constructor.
      *
      * @param ConfigInterface $config
+     * @param string|null $sectionKeyDelimiter
+     *      Null: class default SECTION_KEY_DELIMITER rules.
+     *
+     * @throws \TypeError
+     *      Arg sectionKeyDelimiter not string|null.
      */
-    public function __construct(ConfigInterface $config)
+    public function __construct(ConfigInterface $config, /*?string*/ $sectionKeyDelimiter = null)
     {
         $this->config = $config;
+
+        if ($sectionKeyDelimiter !== null) {
+            if (!is_string($sectionKeyDelimiter)) {
+                throw new \TypeError(
+                    'Arg sectionKeyDelimiter type['
+                    . (!is_object($sectionKeyDelimiter) ? gettype($sectionKeyDelimiter) :
+                        get_class($sectionKeyDelimiter)
+                    )
+                    . '] is string or null.'
+                );
+            }
+            if (!ConfigKey::validate($sectionKeyDelimiter)) {
+                throw new InvalidArgumentException(
+                    'Arg sectionKeyDelimiter is not valid, sectionKeyDelimiter[' . $sectionKeyDelimiter . '].'
+                );
+            }
+            $this->sectionKeyDelimiter = $sectionKeyDelimiter;
+        } else {
+            $this->sectionKeyDelimiter = static::SECTION_KEY_DELIMITER;
+        }
     }
 }

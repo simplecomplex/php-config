@@ -15,6 +15,11 @@ namespace SimpleComplex\Config;
  * - type declared key parameters
  * - requires no methods clear() and deleteMultiple()
  *
+ * To support cachability, keys must conform with PSR-16 key requirements:
+ * - at least: a-zA-Z\d_.
+ * - not: {}()/\@:
+ * - length: >=2 <=64
+ *
  * Implementations must expose instance property 'name'.
  *
  * @see \Psr\SimpleCache\CacheInterface

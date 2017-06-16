@@ -30,7 +30,7 @@ class AbstractIniConfig
      * For compatibility with caching, this validation must also meet
      * PSR-16 Simple Cache requirements.
      *
-     * PSR-16 requirements:
+     * PSR-16 key requirements:
      * - at least: a-zA-Z\d_.
      * - not: {}()/\@:
      * - length: >=2 <=64
