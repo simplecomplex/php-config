@@ -9,10 +9,8 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
-use SimpleComplex\Cache\CacheBroker;
-use SimpleComplex\Cache\CheckEmptyCacheInterface;
+use Psr\SimpleCache\CacheInterface;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
-use SimpleComplex\Config\Exception\ConfigurationException;
 use SimpleComplex\Config\Exception\RuntimeException;
 
 /**
@@ -25,9 +23,15 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * but - as recommended - only exposes section children; not the section
  * as a whole.
  *
+ * @property-read string $name
+ * @property-read bool $useSourceSections
+ * @property-read string $pathBase
+ * @property-read string $pathOverride
+ * @property-read CacheInterface $cacheStore
+ *
  * @package SimpleComplex\Config
  */
-class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInterface
+class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterface
 {
     /**
      * Reference to first object instantiated via the getInstance() method,
@@ -55,8 +59,6 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
 
 
     // SectionedConfigInterface.------------------------------------------------
-
-    use PropertyNameTrait;
 
     /**
      * Fetches a configuration variable from cache.
@@ -353,103 +355,14 @@ class IniSectionedConfig extends AbstractIniConfig implements SectionedConfigInt
     // Custom/business.--------------------------------------------------------
 
     /**
-     * Path to directory where base configuration .ini-files reside.
-     *
-     * Base configuration should work in dev/test environments.
-     *
-     * @var string
-     */
-    const PATH_BASE_DEFAULT = '../conf/ini/base';
-
-    /**
-     * Path to directory where overriding configuration .ini-files reside.
-     *
-     * Overriding configuration should consist of productions settings.
-     *
-     * @var string
-     */
-    const PATH_OVERRIDE_DEFAULT = '../conf/ini/operations';
-
-    /**
-     * Sectioned configuration always uses [section]s of .ini file.
+     * Whether to use [section]s of .ini file, or ignore them.
      *
      * @var bool
      */
     protected $useSourceSections = true;
 
     /**
-     * Config's cache store.
-     *
-     * @var \Psr\SimpleCache\CacheInterface
-     */
-    protected $cacheStore;
-
-    /**
      * @var array
      */
     protected $memory = [];
-
-    /**
-     * Create or load configuration store.
-     *
-     * @uses CacheBroker::getStore()
-     *
-     * @param string $name
-     * @param array $options {
-     *      @var string $pathBase = ''
-     *          Empty: class default (PATH_BASE_DEFAULT) rules.
-     *      @var string $pathOverride = ''
-     *          Empty: class default (PATH_OVERRIDE_DEFAULT) rules.
-     * }
-     * @throws \LogicException
-     *      CacheBroker returns a cache store which has no empty() method.
-     * @throws \TypeError
-     *      Wrong type of an arg options bucket.
-     * @throws InvalidArgumentException
-     *      Bad value of an arg options bucket.
-     * @throws ConfigurationException
-     *      Propagated. If pathBase or pathOverride doesn't exist or isn't directory.
-     * @throws \Throwable
-     *      Propagated.
-     */
-    public function __construct(string $name, array $options = [])
-    {
-        if (!ConfigKey::validate($name)) {
-            throw new InvalidArgumentException('Arg name is not valid, name[' . $name . '].');
-        }
-        $this->name = $name;
-
-        // We need a cache store, no matter what.
-        $this->cacheStore = CacheBroker::getInstance()->getStore($name);
-        // The cache store must have an empty() method.
-        if (
-            !is_a($this->cacheStore, CheckEmptyCacheInterface::class)
-            && !method_exists($this->cacheStore, 'empty')
-        ) {
-            throw new \LogicException(
-                'Cache store must have an empty() method, saw type['
-                . (!is_object($this->cacheStore) ? gettype($this->cacheStore) : get_class($this->cacheStore)) . '].'
-            );
-        }
-
-        // Don't import from .ini-files if our cache store has items.
-        if (!$this->cacheStore->empty()) {
-            return;
-        }
-
-        // Resolve 'base' and 'override' .ini-file dirs, and parse their files.
-        $collection = array_replace_recursive(
-            $this->findNParseIniFiles('pathBase', $options, static::PATH_BASE_DEFAULT),
-            $this->findNParseIniFiles('pathOverride', $options, static::PATH_OVERRIDE_DEFAULT)
-        );
-
-        // Cache.
-        if (!$this->cacheStore->setMultiple($collection)) {
-            // Unlikely, but safer.
-            throw new RuntimeException(
-                'Underlying cache store type[' . get_class($this->cacheStore)
-                . '] failed to set cache items loaded from .ini file(s).'
-            );
-        }
-    }
 }
