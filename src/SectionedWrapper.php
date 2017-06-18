@@ -177,7 +177,7 @@ class SectionedWrapper implements SectionedConfigInterface
      */
     public function __get($name)
     {
-        if ($name == 'name') {
+        if ('' . $name == 'name') {
             return $this->config->name;
         }
         throw new OutOfBoundsException(get_class($this) . ' instance has no property[' . $name . '].');
@@ -192,7 +192,7 @@ class SectionedWrapper implements SectionedConfigInterface
      */
     public function __set($name, $value)
     {
-        if ($name == 'name') {
+        if ('' . $name == 'name') {
             throw new RuntimeException(get_class($this) . ' instance property[' . $name . '] is read-only.');
         }
         throw new OutOfBoundsException(get_class($this) . ' instance has no property[' . $name . '].');

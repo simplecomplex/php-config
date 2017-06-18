@@ -12,6 +12,7 @@ namespace SimpleComplex\Config;
 use Psr\SimpleCache\CacheInterface;
 use SimpleComplex\Utils\Explorable;
 use SimpleComplex\Utils\Utils;
+use SimpleComplex\Utils\PathFileList;
 use SimpleComplex\Cache\CacheBroker;
 use SimpleComplex\Cache\CheckEmptyCacheInterface;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
@@ -58,7 +59,7 @@ class IniConfigBase extends Explorable
     ];
 
     /**
-     * Whether to use [section]s of .ini file, or ignore them.
+     * Whether to require and use [section]s of .ini file, or ignore them.
      *
      * @var bool
      */
@@ -70,6 +71,11 @@ class IniConfigBase extends Explorable
      * @var \Psr\SimpleCache\CacheInterface
      */
     protected $cacheStore;
+
+    /**
+     * @var Utils
+     */
+    protected $utils;
 
 
     // Explorable.--------------------------------------------------------------
@@ -98,10 +104,10 @@ class IniConfigBase extends Explorable
      */
     public function __get($name)
     {
-        switch ($name) {
+        switch ('' . $name) {
             case 'pathBase':
             case 'pathOverride':
-                return $this->paths[$name == 'pathBase' ? 'base' : 'override'];
+                return $this->paths['' . $name == 'pathBase' ? 'base' : 'override'];
             default:
                 if (in_array($name, $this->explorableIndex, true)) {
                     return $this->{$name};
@@ -121,7 +127,7 @@ class IniConfigBase extends Explorable
      * @throws RuntimeException
      *      If that instance property is read-only.
      */
-    public function __set(string $name, $value) /*: void*/
+    public function __set($name, $value) /*: void*/
     {
         if (in_array($name, $this->explorableIndex, true)) {
             throw new RuntimeException(get_class($this) . ' instance property[' . $name . '] is read-only.');
@@ -195,131 +201,114 @@ class IniConfigBase extends Explorable
                         . (!is_object($options[$opt_name]) ? gettype($options[$opt_name]) :
                             get_class($options[$opt_name])) . '] is not string.');
                 }
-                $this->{$path_name} = $options[$opt_name];
+                $this->paths{$path_name} = $options[$opt_name];
             } else {
-                $this->{$path_name} = static::PATH_DEFAULTS[$path_name];
+                $this->paths{$path_name} = static::PATH_DEFAULTS[$path_name];
             }
         }
+
+        // Secure dependency.
+        $this->utils = Utils::getInstance();
 
         // Don't import from .ini-files if our cache store has items.
         if (!$this->cacheStore->empty()) {
             return;
         }
 
-        // Resolve 'base' and 'override' .ini-file dirs, and parse their files.
-        /*$collection = array_replace_recursive(
-            $this->findNParseIniFiles('pathBase', $options, static::PATH_BASE_DEFAULT),
-            $this->findNParseIniFiles('pathOverride', $options, static::PATH_OVERRIDE_DEFAULT)
-        );
-
-        // Cache.
-        if (!$this->cacheStore->setMultiple($collection)) {
-            // Unlikely, but safer.
-            throw new RuntimeException(
-                'Underlying cache store type[' . get_class($this->cacheStore)
-                . '] failed to set cache items loaded from .ini file(s).'
-            );
-        }*/
+        // Do attempt to import.
+        $this->refresh();
     }
 
     /**
-     * @param string $pathName
+     * Flushes the cache store and loads fresh configuration from all .ini files
+     * in the base and override paths.
      *
-     * @return array
-     */
-    protected function loadFromSource(string $pathName) : array
-    {
-        /*
-        // http://php.net/manual/en/class.recursivefilteriterator.php
-
-$path = '/www/00_simplecomplex/sites/php-psr.source/conf/ini';
-$list = new RecursiveIteratorIterator(
-    new RecursiveDirectoryIterator($path, FilesystemIterator::UNIX_PATHS | FilesystemIterator::FOLLOW_SYMLINKS | FilesystemIterator::SKIP_DOTS),
-    RecursiveIteratorIterator::SELF_FIRST
-);
-foreach ($list as $item) {
-    $name = $item->getFilename();
-    if ($name{0} === '.') {
-        continue;
-    }
-
-    echo $item->getPath() . '/' . $name . "\n";
-}
-         */
-    }
-
-    /**
-     * Resolves base and override paths, and parses all their .ini files.
+     * @see Utils::resolvePath()
+     * @see Utils::PathFileList()
+     * @see Utils::parseIniString()
+     * @see CacheInterface::setMultiple()
      *
-     * @param string $pathName
-     * @param array $options
-     * @param string $pathDefault
+     * @return bool
+     *      False: no configuration variables found in .ini files of the paths.
      *
-     * @return array
-     *
-     * @throws \TypeError
-     *      Wrong type of arg options bucket.
      * @throws ConfigurationException
-     *      If the path doesn't exist or isn't directory.
-     *      if keyMode is domainSectioned and an .ini file doesn't declare
-     *      a [section] before flat vars.
+     * @throws \Throwable
+     *      Propagated.
      */
-    protected function findNParseIniFiles(string $pathName, array $options, string $pathDefault) : array
+    public function refresh() : bool
     {
-        $utils = Utils::getInstance();
+        // Clear cache first, as promised.
+        $this->cacheStore->clear();
 
-        // @todo: must support finding in subfolders.
-
-        if (!empty($options[$pathName])) {
-            if (!is_string($options[$pathName])) {
-                throw new \TypeError('Arg options[' . $pathName . '] type['
-                    . (!is_object($options[$pathName]) ? gettype($options[$pathName]) :
-                        get_class($options[$pathName])) . '] is not string.');
-            }
-            $path = $utils->resolvePath($options[$pathName]);
-        } else {
-            $path = $utils->resolvePath($pathDefault);
-        }
-        if (!file_exists($path) || !is_dir($path)) {
-            throw new ConfigurationException(
-                $pathName . ' for configuration .ini files '
-                . (!file_exists($this->{$path}) ? 'does not exist' : 'is not a directory') . ', path[' . $path . '].'
-            );
-        }
-
+        // Load all variables from .ini file sources.
         $collection = [];
-        $dir_iterator = new \DirectoryIterator($path);
-        foreach ($dir_iterator as $item) {
-            if (!$item->isDot() && $item->getExtension() == 'ini') {
-                if ($this->useSourceSections) {
-                    // Check that the whole configuration begins with a [section].
-                    $ini = file_get_contents($path . '/' . $item->getFilename());
-                    // Remove comments and leading empty lines.
-                    $ini = ltrim(
-                        preg_replace(
-                            '/\n;[^\n]+\n/m',
-                            "\n",
-                            "\n" . str_replace("\r", '', $ini)
-                        )
-                    );
-                    if (!trim($ini)) {
-                        continue;
+        foreach ($this->paths as $path_name => $path) {
+            // Convert path to absolute if required, and check that it exists.
+            $absolute_path = $this->utils->resolvePath($path);
+            // Find all .ini files in the path, recursively.
+            $files = (new PathFileList($absolute_path, ['ini']))->getArrayCopy();
+            if ($files) {
+                // Parse all .ini files in the path.
+                $settings_in_path = [];
+                foreach ($files as $path_file) {
+                    if ($this->useSourceSections) {
+                        $ini = trim(
+                            file_get_contents($path_file)
+                        );
+                        if ($ini) {
+                            // Check that the whole configuration begins with a [section].
+                            // Remove comments and leading empty lines.
+                            $ini = ltrim(
+                                preg_replace(
+                                    '/\n;[^\n]+\n/m',
+                                    "\n",
+                                    "\n" . str_replace("\r", '', $ini)
+                                )
+                            );
+                            if (trim($ini)) {
+                                if (!preg_match('/^\[/', $ini)) {
+                                    throw new ConfigurationException(
+                                        'Using source sections, an .ini file must declare a [section] before flat vars,'
+                                        . 'file[' . $path_file . '].'
+                                    );
+                                }
+                                // Union; two files within same dir shouldn't declare the
+                                // the same vars.
+                                // But if they do, the latter will rule.
+                                $settings_in_path += $this->utils->parseIniString($ini, true, true);
+                            }
+                        }
+                    } else {
+                        $settings_in_path += $this->utils->parseIniFile($path_file, false, true);
                     }
-                    if (!preg_match('/^\[/', $ini)) {
-                        throw new ConfigurationException(
-                            'Using source sections, an .ini file must declare a [section] before flat vars, file['
-                            . $path . '/' . $item->getFilename() . '].'
+                }
+                if ($settings_in_path) {
+                    if (!$collection) {
+                        $collection =& $settings_in_path;
+                        unset($settings_in_path);
+                    } else {
+                        // Let variables of latter path override settings
+                        // of previous paths.
+                        $collection = array_replace_recursive(
+                            $collection,
+                            $settings_in_path
                         );
                     }
-                    // Union; two files within same dir shouldn't declare the
-                    // the same vars.
-                    // But if they do, the latter will rule.
-                    $collection += $utils->parseIniString($ini, true, true);
-                } else {
-                    $collection += $utils->parseIniFile($path . '/' . $item->getFilename(), false, true);
                 }
             }
         }
-        return $collection;
+
+        // Pass to cache.
+        if ($collection) {
+            if (!$this->cacheStore->setMultiple($collection)) {
+                // Unlikely, but safer.
+                throw new RuntimeException(
+                    'Underlying cache store type[' . get_class($this->cacheStore)
+                    . '] failed to set cache items loaded from .ini file(s).'
+                );
+            }
+            return true;
+        }
+        return false;
     }
 }

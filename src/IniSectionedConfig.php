@@ -23,6 +23,12 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * but - as recommended - only exposes section children; not the section
  * as a whole.
  *
+ * Requires and uses [section]s in .ini files.
+ *
+ * @see IniConfigBase::__construct()
+ *      This class doesn't specialize parent constructor,
+ *      nor offers other constructor.
+ *
  * @property-read string $name
  * @property-read bool $useSourceSections
  * @property-read string $pathBase
@@ -88,15 +94,6 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
         return $this->memory[$section][$key] ?? (
                 $this->cacheStore->get($section, [])[$key] ?? $default
             );
-        /*
-        if (isset($this->memory[$section][$key])) {
-            return $this->memory[$section][$key];
-        }
-        $arr = $this->cacheStore->get($section);
-        // ~ If array; checking for array type should nornally be redundant.
-        return $arr !== null && isset($arr[$key]) ? $arr[$key] :
-            $default;
-        */
     }
 
     /**
@@ -355,7 +352,7 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
     // Custom/business.--------------------------------------------------------
 
     /**
-     * Whether to use [section]s of .ini file, or ignore them.
+     * Requires and uses [section]s of .ini file.
      *
      * @var bool
      */
@@ -365,4 +362,10 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      * @var array
      */
     protected $memory = [];
+
+    /**
+     * Doesn't specialize parent constructor, nor offers other constructor.
+     *
+     * @see IniConfigBase::__construct()
+     */
 }

@@ -22,6 +22,8 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * where each instance only handles say a module/component's dedicated
  * configuration.
  *
+ * Defaults to ignore [section]s in .ini files.
+ *
  * @property-read string $name
  * @property-read bool $useSourceSections
  * @property-read string $pathBase
@@ -220,7 +222,10 @@ class IniConfig extends IniConfigBase implements ConfigInterface
     /**
      * Create or load configuration store.
      *
+     * Defaults to ignore [section]s in .ini files.
+     *
      * @uses CacheBroker::getStore()
+     * @see IniConfigBase::refresh()
      *
      * @param string $name
      * @param array $options {

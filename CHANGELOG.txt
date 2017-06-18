@@ -2,6 +2,8 @@ SimpleComplex/Config 1.x, 2017-06-18
 ------------------------------------
 - (Sectioned)ConfigInterface now require implementing 'magic' getter and setter
   to expose 'name' property as read-only.
+- Simple and sectioned ini configuration classes both based on same base class.
+- Ini path(s) traversal recursive, skipping .hidden dirs and files (like .git).
 
 SimpleComplex/Config 1.x, 2017-06-16
 ------------------------------------
