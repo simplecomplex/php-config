@@ -9,7 +9,9 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
-use \SimpleComplex\Config\Exception\InvalidArgumentException;
+use SimpleComplex\Config\Exception\InvalidArgumentException;
+use SimpleComplex\Config\Exception\OutOfBoundsException;
+use SimpleComplex\Config\Exception\RuntimeException;
 
 /**
  * Wraps a simple config instance as a sectioned config instance.
@@ -50,32 +52,6 @@ class SectionedWrapper implements SectionedConfigInterface
 
 
     // SectionedConfigInterface.------------------------------------------------
-
-    /**
-     * @param mixed $name
-     *
-     * @return string
-     *
-     * @throws \OutOfBoundsException
-     */
-    public function __get($name)
-    {
-        if ($name == 'name') {
-            return $this->config->name;
-        }
-        throw new \OutOfBoundsException(get_class($this) . ' instance has no property[' . $name . '].');
-    }
-
-    /**
-     * @param mixed $name
-     * @param mixed $value
-     *
-     * @throws \OutOfBoundsException
-     */
-    public function __set($name, $value)
-    {
-        throw new \OutOfBoundsException(get_class($this) . ' instance has no property[' . $name . '].');
-    }
 
     /**
      * Arg string or key is allowed to be empty.
@@ -184,6 +160,42 @@ class SectionedWrapper implements SectionedConfigInterface
      */
     public function forget(string $section) /*: void*/
     {
+    }
+
+
+    // Expose read-only instance property 'name'.
+
+    /**
+     * Exposes internal ConfigInterface's name property as this instance'
+     * (virtual) name property.
+     *
+     * @param mixed $name
+     *
+     * @return string
+     *
+     * @throws OutOfBoundsException
+     */
+    public function __get($name)
+    {
+        if ($name == 'name') {
+            return $this->config->name;
+        }
+        throw new OutOfBoundsException(get_class($this) . ' instance has no property[' . $name . '].');
+    }
+
+    /**
+     * @param mixed $name
+     * @param mixed $value
+     *
+     * @throws OutOfBoundsException
+     * @throws RuntimeException
+     */
+    public function __set($name, $value)
+    {
+        if ($name == 'name') {
+            throw new RuntimeException(get_class($this) . ' instance property[' . $name . '] is read-only.');
+        }
+        throw new OutOfBoundsException(get_class($this) . ' instance has no property[' . $name . '].');
     }
 
 

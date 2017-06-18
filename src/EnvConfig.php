@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace SimpleComplex\Config;
 
 use SimpleComplex\Config\Exception\InvalidArgumentException;
+use SimpleComplex\Config\Exception\OutOfBoundsException;
+use SimpleComplex\Config\Exception\RuntimeException;
 
 /**
  * Configuration using environment variables as source, and no caching.
@@ -44,8 +46,6 @@ class EnvConfig implements ConfigInterface
 
 
     // ConfigInterface.----------------------------------------------------------
-
-    use PropertyNameTrait;
 
     /**
      * Fetches an environment variable.
@@ -150,6 +150,44 @@ class EnvConfig implements ConfigInterface
     {
         $k = $this->keyConvert($key);
         return getenv($k) !== false;
+    }
+
+
+    // Expose read-only instance property 'name'.
+
+    /**
+     * @var string
+     */
+    protected $name;
+
+    /**
+     * @param mixed $name
+     *
+     * @return string
+     *
+     * @throws OutOfBoundsException
+     */
+    public function __get($name)
+    {
+        if ($name == 'name') {
+            return $this->name;
+        }
+        throw new OutOfBoundsException(get_class($this) . ' instance has no property[' . $name . '].');
+    }
+
+    /**
+     * @param mixed $name
+     * @param mixed $value
+     *
+     * @throws OutOfBoundsException
+     * @throws RuntimeException
+     */
+    public function __set($name, $value)
+    {
+        if ($name == 'name') {
+            throw new RuntimeException(get_class($this) . ' instance property[' . $name . '] is read-only.');
+        }
+        throw new OutOfBoundsException(get_class($this) . ' instance has no property[' . $name . '].');
     }
 
 

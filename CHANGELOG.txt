@@ -1,3 +1,8 @@
+SimpleComplex/Config 1.x, 2017-06-18
+------------------------------------
+- (Sectioned)ConfigInterface now require implementing 'magic' getter and setter
+  to expose 'name' property as read-only.
+
 SimpleComplex/Config 1.x, 2017-06-16
 ------------------------------------
 - Wrap simple config as sectioned config.

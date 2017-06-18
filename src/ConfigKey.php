@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
-use \SimpleComplex\Cache\CacheKey;
+use SimpleComplex\Cache\CacheKey;
 
 /**
  * Validate config key.
