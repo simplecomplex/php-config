@@ -232,6 +232,9 @@ class IniConfigBase extends Explorable
      *      False: no configuration variables found in .ini files of the paths.
      *
      * @throws ConfigurationException
+     *      A path doesn't exist or isn't directory.
+     *      Using source sections, an .ini file doesn't declare a [section]
+     *      before flat vars.
      * @throws \Throwable
      *      Propagated.
      */
@@ -245,6 +248,16 @@ class IniConfigBase extends Explorable
         foreach ($this->paths as $path_name => $path) {
             // Convert path to absolute if required, and check that it exists.
             $absolute_path = $this->utils->resolvePath($path);
+            if (!file_exists($absolute_path)) {
+                throw new ConfigurationException(
+                    'The \'' . $path_name . '\' path doesn\'t exist, path[' . $absolute_path . ']'
+                );
+            }
+            if (!is_dir($absolute_path)) {
+                throw new ConfigurationException(
+                    'The \'' . $path_name . '\' path is not a directory, path[' . $absolute_path . ']'
+                );
+            }
             // Find all .ini files in the path, recursively.
             $files = (new PathFileList($absolute_path, ['ini']))->getArrayCopy();
             if ($files) {
