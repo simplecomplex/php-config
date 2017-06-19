@@ -192,9 +192,8 @@ class IniConfigBase extends Explorable
         // Cache should live forever.
         // And setter/getter arg ttl should be ignored (we don't pass it anyway).
         // In effect: time-to-live should be ignored complete
-        $this->cacheStore
-            ->setTtlIgnore(true)
-            ->setTtlDefault(ManagableCacheInterface::TTL_NONE);
+        $this->cacheStore->setTtlIgnore(true);
+        $this->cacheStore->setTtlDefault(ManagableCacheInterface::TTL_NONE);
 
         $paths = array_keys($this->paths);
         foreach ($paths as $path_name) {
