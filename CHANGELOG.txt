@@ -1,3 +1,7 @@
+SimpleComplex/Config 1.x, 2017-06-19
+------------------------------------
+- Tell cache store to live forever; ignore time-to-live completely.
+
 SimpleComplex/Config 1.x, 2017-06-18
 ------------------------------------
 - (Sectioned)ConfigInterface now require implementing 'magic' getter and setter

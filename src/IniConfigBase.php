@@ -9,12 +9,11 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
-use Psr\SimpleCache\CacheInterface;
 use SimpleComplex\Utils\Explorable;
 use SimpleComplex\Utils\Utils;
 use SimpleComplex\Utils\PathFileList;
 use SimpleComplex\Cache\CacheBroker;
-use SimpleComplex\Cache\CheckEmptyCacheInterface;
+use SimpleComplex\Cache\ManagableCacheInterface;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\OutOfBoundsException;
 use SimpleComplex\Config\Exception\ConfigurationException;
@@ -22,13 +21,16 @@ use SimpleComplex\Config\Exception\RuntimeException;
 
 /**
  * Helper for configuration classes using .ini files as source,
- * and PSR-16 cache as store.
+ * and PSR-16 Simple Cache (+ ManagableCacheInterface) as store.
  *
  * @property-read string $name
  * @property-read bool $useSourceSections
  * @property-read string $pathBase
  * @property-read string $pathOverride
- * @property-read CacheInterface $cacheStore
+ * @property-read ManagableCacheInterface $cacheStore
+ *
+ * @see \Psr\SimpleCache\CacheInterface
+ * @see ManagableCacheInterface
  *
  * @package SimpleComplex\Config
  */
@@ -68,7 +70,7 @@ class IniConfigBase extends Explorable
     /**
      * Config's cache store.
      *
-     * @var \Psr\SimpleCache\CacheInterface
+     * @var ManagableCacheInterface
      */
     protected $cacheStore;
 
@@ -165,10 +167,9 @@ class IniConfigBase extends Explorable
      * @throws \TypeError
      * @throws InvalidArgumentException
      *      Bad value of an arg options bucket.
-     * @throws \LogicException
-     *      CacheBroker returns a cache store which has no empty() method.
      * @throws ConfigurationException
-     *      Propagated. If pathBase or pathOverride doesn't exist or isn't directory.
+     *      CacheBroker returns cache store which isn't ManagableCacheInterface.
+     *      Propagated, if pathBase or pathOverride doesn't exist or isn't directory.
      * @throws \Throwable
      *      Propagated.
      */
@@ -182,15 +183,18 @@ class IniConfigBase extends Explorable
         // We need a cache store, no matter what.
         $this->cacheStore = CacheBroker::getInstance()->getStore($name);
         // The cache store must have an empty() method.
-        if (
-            !is_a($this->cacheStore, CheckEmptyCacheInterface::class)
-            && !method_exists($this->cacheStore, 'empty')
-        ) {
-            throw new \LogicException(
+        if (!($this->cacheStore instanceof ManagableCacheInterface)) {
+            throw new ConfigurationException(
                 'Cache store must have an empty() method, saw type['
                 . (!is_object($this->cacheStore) ? gettype($this->cacheStore) : get_class($this->cacheStore)) . '].'
             );
         }
+        // Cache should live forever.
+        // And setter/getter arg ttl should be ignored (we don't pass it anyway).
+        // In effect: time-to-live should be ignored complete
+        $this->cacheStore
+            ->setTtlIgnore(true)
+            ->setTtlDefault(ManagableCacheInterface::TTL_NONE);
 
         $paths = array_keys($this->paths);
         foreach ($paths as $path_name) {
@@ -211,7 +215,7 @@ class IniConfigBase extends Explorable
         $this->utils = Utils::getInstance();
 
         // Don't import from .ini-files if our cache store has items.
-        if (!$this->cacheStore->empty()) {
+        if (!$this->cacheStore->isEmpty()) {
             return;
         }
 
@@ -226,7 +230,7 @@ class IniConfigBase extends Explorable
      * @see Utils::resolvePath()
      * @see Utils::PathFileList()
      * @see Utils::parseIniString()
-     * @see CacheInterface::setMultiple()
+     * @see \Psr\SimpleCache\CacheInterface::setMultiple()
      *
      * @return bool
      *      False: no configuration variables found in .ini files of the paths.

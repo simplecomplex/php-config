@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
-use Psr\SimpleCache\CacheInterface;
 use SimpleComplex\Cache\CacheBroker;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\RuntimeException;
@@ -28,7 +27,7 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * @property-read bool $useSourceSections
  * @property-read string $pathBase
  * @property-read string $pathOverride
- * @property-read CacheInterface $cacheStore
+ * @property-read \SimpleComplex\Cache\ManagableCacheInterface $cacheStore
  *
  * @package SimpleComplex\Config
  */
