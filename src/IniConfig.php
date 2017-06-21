@@ -141,21 +141,21 @@ class IniConfig extends IniConfigBase implements ConfigInterface
     /**
      * Obtains multiple config items by their unique keys, from cache.
      *
-     * @param iterable $keys
+     * @param array|object $keys
      * @param mixed $default
      *
      * @return array
      *
      * @throws \TypeError
-     *      Arg keys not iterable.
+     *      Arg keys not array|object.
      * @throws \Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      */
-    public function getMultiple(/*iterable*/ $keys, $default = null) : array
+    public function getMultiple($keys, $default = null) : array
     {
-        if (!is_array($keys) && !is_a($keys, \Traversable::class)) {
+        if (!is_array($keys) && !is_object($keys)) {
             throw new \TypeError(
-                'Arg keys type[' . (!is_object($keys) ? gettype($keys) : get_class($keys)) . '] is not iterable.'
+                'Arg keys type[' . (!is_object($keys) ? gettype($keys) : get_class($keys)) . '] is not array|object.'
             );
         }
         return $this->cacheStore->getMultiple($keys, $default);
@@ -164,13 +164,13 @@ class IniConfig extends IniConfigBase implements ConfigInterface
     /**
      * Persists a set of key => value pairs; in the cache, not .ini file.
      *
-     * @param iterable $values
+     * @param array|object $values
      *
      * @return bool
      *      Always true.
      *
      * @throws \TypeError
-     *      Arg values not iterable.
+     *      Arg values not array|object.
      * @throws InvalidArgumentException
      *      Bad key.
      * @throws \Psr\SimpleCache\InvalidArgumentException
@@ -178,11 +178,12 @@ class IniConfig extends IniConfigBase implements ConfigInterface
      * @throws RuntimeException
      *      Cache store failed silently.
      */
-    public function setMultiple(/*iterable*/ $values) : bool
+    public function setMultiple($values) : bool
     {
-        if (!is_array($values) && !is_a($values, \Traversable::class)) {
+        if (!is_array($values) && !is_object($values)) {
             throw new \TypeError(
-                'Arg values type[' . (!is_object($values) ? gettype($values) : get_class($values)) . '] is not iterable.'
+                'Arg values type[' . (!is_object($values) ? gettype($values) : get_class($values))
+                . '] is not array|object.'
             );
         }
         foreach ($values as $key => $value) {

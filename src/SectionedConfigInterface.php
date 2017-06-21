@@ -45,7 +45,7 @@ interface SectionedConfigInterface
      * Fetches a value from the configuration store.
      *
      * An implementation may support wildcard * for the get() method's key
-     * argument, and thus return the whole section as an iterable;
+     * argument, and thus return the whole section as an array|object;
      * but only as copy, not as reference.
      *
      * @param string $section
@@ -92,36 +92,36 @@ interface SectionedConfigInterface
      * Obtains multiple config items by section and keys.
      *
      * @param string $section
-     * @param iterable $keys
+     * @param array|object $keys
      * @param mixed|null $default
      *
-     * @return iterable
+     * @return array|object
      *
      * @throws \InvalidArgumentException
-     *   MUST be thrown if arg keys is neither an array nor a Traversable,
+     *   MUST be thrown if arg keys isn't array|object,
      *   or if any of arg keys are not a legal value.
      */
-    public function getMultiple(string $section, /*iterable*/ $keys, $default = null) /*: iterable*/;
+    public function getMultiple(string $section, $keys, $default = null);
 
     /**
      * Set multiple config items by section and keys.
      *
      * @param string $section
-     * @param iterable $values
+     * @param array|object $values
      *
      * @return bool
      *
      * @throws \InvalidArgumentException
-     *   MUST be thrown if arg values is neither an array nor a Traversable,
+     *   MUST be thrown if arg values isn't array|object,
      *   or if any of arg values are not a legal value.
      */
-    public function setMultiple(string $section, /*iterable*/ $values) : bool;
+    public function setMultiple(string $section, $values) : bool;
 
     /**
      * Determines whether an item is present in the configuration store.
      *
      * An implementation may support wildcard * for the has() method's key
-     * argument, and thus check if the section (as an iterable) exists.
+     * argument, and thus check if the section (as an array|object) exists.
      *
      * @param string $section
      * @param string $key

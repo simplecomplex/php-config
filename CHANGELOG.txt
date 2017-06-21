@@ -1,3 +1,8 @@
+SimpleComplex/Config 1.x, 2017-06-21
+------------------------------------
+- Don't use 'iterable' type; effectively useless because stdClass is iterable
+  but not 'iterable' (PHP still sucks type-wise).
+
 SimpleComplex/Config 1.x, 2017-06-19
 ------------------------------------
 - Tell cache store to live forever; ignore time-to-live completely.

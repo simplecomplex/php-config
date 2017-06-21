@@ -204,21 +204,21 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      * Obtains multiple config items by their unique keys, from cache.
      *
      * @param string $section
-     * @param iterable $keys
+     * @param array|object $keys
      * @param mixed $default
      *
      * @return array
      *
      * @throws \TypeError
-     *      Arg keys not iterable.
+     *      Arg keys not array|object.
      * @throws \Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      */
-    public function getMultiple(string $section, /*iterable*/ $keys, $default = null) : array
+    public function getMultiple(string $section, $keys, $default = null) : array
     {
-        if (!is_array($keys) && !is_a($keys, \Traversable::class)) {
+        if (!is_array($keys) && !is_object($keys)) {
             throw new \TypeError(
-                'Arg keys type[' . (!is_object($keys) ? gettype($keys) : get_class($keys)) . '] is not iterable.'
+                'Arg keys type[' . (!is_object($keys) ? gettype($keys) : get_class($keys)) . '] is not array|object.'
             );
         }
 
@@ -238,13 +238,13 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      * Persists a set of key => value pairs; in the cache, not .ini file.
      *
      * @param string $section
-     * @param iterable $values
+     * @param array|object $values
      *
      * @return bool
      *      Always true.
      *
      * @throws \TypeError
-     *      Arg values not iterable.
+     *      Arg values not array|object.
      * @throws InvalidArgumentException
      *      Bad key.
      * @throws \Psr\SimpleCache\InvalidArgumentException
@@ -252,17 +252,17 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      * @throws RuntimeException
      *      Cache store failed silently.
      */
-    public function setMultiple(string $section, /*iterable*/ $values) : bool
+    public function setMultiple(string $section, $values) : bool
     {
         if (!ConfigKey::validate($section)) {
             throw new InvalidArgumentException(
                 'Arg section does not conform with .ini file and/or cache key requirements, section[' . $section . '].'
             );
         }
-        if (!is_array($values) && !is_a($values, \Traversable::class)) {
+        if (!is_array($values) && !is_object($values)) {
             throw new \TypeError(
                 'Arg values type[' . (!is_object($values) ? gettype($values) : get_class($values))
-                . '] is not iterable.'
+                . '] is not array|object.'
             );
         }
 

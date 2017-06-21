@@ -99,21 +99,21 @@ class EnvConfig implements ConfigInterface
     /**
      * Obtains multiple cache items by their unique keys.
      *
-     * @param iterable $keys
+     * @param array|object $keys
      * @param mixed $default
      *
      * @return array
      *
      * @throws \TypeError
-     *      Arg keys no iterable.
+     *      Arg keys no array|object.
      * @throws InvalidArgumentException
      *      Propagated.
      */
-    public function getMultiple(/*iterable*/ $keys, $default = null) : array
+    public function getMultiple($keys, $default = null) : array
     {
-        if (!is_array($keys) && !is_a($keys, \Traversable::class)) {
+        if (!is_array($keys) && !is_object($keys)) {
             throw new \TypeError(
-                'Arg keys type[' . (!is_object($keys) ? gettype($keys) : get_class($keys)) . '] is not iterable.'
+                'Arg keys type[' . (!is_object($keys) ? gettype($keys) : get_class($keys)) . '] is not array|object.'
             );
         }
         $values = [];
@@ -126,12 +126,12 @@ class EnvConfig implements ConfigInterface
     /**
      * Does nothing at all.
      *
-     * @param iterable $values
+     * @param array|object $values
      *
      * @return bool
      *      Always true.
      */
-    public function setMultiple(/*iterable*/ $values) : bool
+    public function setMultiple($values) : bool
     {
         return true;
     }

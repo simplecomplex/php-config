@@ -75,29 +75,29 @@ interface ConfigInterface
     /**
      * Obtains multiple config items by their unique keys.
      *
-     * @param iterable $keys
+     * @param array|object $keys
      * @param mixed|null $default
      *
-     * @return iterable
+     * @return array|object
      *
      * @throws \InvalidArgumentException
-     *   MUST be thrown if arg keys is neither an array nor a Traversable,
+     *   MUST be thrown if arg keys isn't array|object,
      *   or if any of arg keys are not a legal value.
      */
-    public function getMultiple(/*iterable*/ $keys, $default = null) /*: iterable*/;
+    public function getMultiple($keys, $default = null);
 
     /**
      * Persists a set of key => value pairs in the configuration store.
      *
-     * @param iterable $values
+     * @param array|object $values
      *
      * @return bool
      *
      * @throws \InvalidArgumentException
-     *   MUST be thrown if arg values is neither an array nor a Traversable,
+     *   MUST be thrown if arg values isn't array|object,
      *   or if any of arg values are not a legal value.
      */
-    public function setMultiple(/*iterable*/ $values) : bool;
+    public function setMultiple($values) : bool;
 
     /**
      * Determines whether an item is present in the configuration store.

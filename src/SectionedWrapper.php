@@ -98,7 +98,7 @@ class SectionedWrapper implements SectionedConfigInterface
      *
      * @inheritdoc
      */
-    public function getMultiple(string $section, /*iterable*/ $keys, $default = null)
+    public function getMultiple(string $section, $keys, $default = null)
     {
         $sctnd = [];
         foreach ($keys as $key) {
@@ -114,7 +114,7 @@ class SectionedWrapper implements SectionedConfigInterface
      *
      * @inheritdoc
      */
-    public function setMultiple(string $section, /*iterable*/ $values) : bool
+    public function setMultiple(string $section, $values) : bool
     {
         $sctnd = [];
         foreach ($values as $key => $value) {
