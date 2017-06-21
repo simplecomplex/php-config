@@ -185,7 +185,7 @@ class IniConfigBase extends Explorable
         // The cache store must have an empty() method.
         if (!($this->cacheStore instanceof ManagableCacheInterface)) {
             throw new ConfigurationException(
-                'Cache store must have an empty() method, saw type['
+                'Cache store must implement ManagableCacheInterface, saw type['
                 . (!is_object($this->cacheStore) ? gettype($this->cacheStore) : get_class($this->cacheStore)) . '].'
             );
         }
