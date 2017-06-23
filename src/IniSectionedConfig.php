@@ -32,7 +32,7 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * @property-read bool $useSourceSections
  * @property-read string $pathBase
  * @property-read string $pathOverride
- * @property-read \SimpleComplex\Cache\ManagableCacheInterface $cacheStore
+ * @property-read \SimpleComplex\Cache\ManageableCacheInterface $cacheStore
  *
  * @package SimpleComplex\Config
  */
