@@ -8,6 +8,7 @@ SimpleComplex/Config 1.x, 2017-06-24
   method, because there can only be a single set of environment variables.
 - Qualify IniConfigBase cache store name.
 - Convenience class Config, in front of IniSectionedConfig.
+- Cli commands get, set, delete, refresh fully implemented.
 
 SimpleComplex/Config 1.x, 2017-06-21
 ------------------------------------

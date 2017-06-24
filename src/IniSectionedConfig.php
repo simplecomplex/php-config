@@ -286,7 +286,7 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
     public function has(string $section, string $key) : bool
     {
         if ($key == '*') {
-            return !!($this->memory[$section] ?? $this->cacheStore->get($section));
+            return !!($this->memory[$section] ?? $this->cacheStore->has($section));
         }
         return isset($this->memory[$section]) ? isset($this->memory[$section][$key]) :
             isset($this->cacheStore->get($section, [])[$key]);
