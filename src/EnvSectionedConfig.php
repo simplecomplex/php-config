@@ -12,6 +12,10 @@ namespace SimpleComplex\Config;
 /**
  * Wrapped environment variable configuration object.
  *
+ * Weird but effective pattern. See SectionedWrapper for methods.
+ *
+ * @see SectionedWrapper
+ *
  * @see EnvConfig
  *
  * @package SimpleComplex\Config

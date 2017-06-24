@@ -42,7 +42,7 @@ namespace SimpleComplex\Config;
 interface SectionedConfigInterface
 {
     /**
-     * Fetches a value from the configuration store.
+     * Fetches an item from the configuration store.
      *
      * An implementation may support wildcard * for the get() method's key
      * argument, and thus return the whole section as an array|object;
@@ -60,8 +60,9 @@ interface SectionedConfigInterface
     public function get(string $section, string $key, $default = null);
 
     /**
-     * Persists data in the configuration store, uniquely referenced by section
-     * plus key.
+     * Saves/overwrites an item in the configuration store.
+     *
+     * It is allowed that this method does nothing.
      *
      * @param string $section
      * @param string $key
@@ -78,6 +79,8 @@ interface SectionedConfigInterface
     /**
      * Delete an item from the configuration store.
      *
+     * It is allowed that this method does nothing.
+     *
      * @param string $section
      * @param string $key
      *
@@ -89,7 +92,7 @@ interface SectionedConfigInterface
     public function delete(string $section, string $key) : bool;
 
     /**
-     * Obtains multiple config items by section and keys.
+     * Fetches multiple config items by section and keys.
      *
      * @param string $section
      * @param array|object $keys
@@ -104,7 +107,9 @@ interface SectionedConfigInterface
     public function getMultiple(string $section, $keys, $default = null);
 
     /**
-     * Set multiple config items by section and keys.
+     * Sets multiple config items by section and keys.
+     *
+     * It is allowed that this method does nothing.
      *
      * @param string $section
      * @param array|object $values
@@ -144,6 +149,8 @@ interface SectionedConfigInterface
      * multi-dimensionally (and thus cannot load a section into memory)
      * must return null.
      *
+     * It is allowed that this method does nothing.
+     *
      * @param string $section
      *
      * @return bool|null
@@ -157,6 +164,8 @@ interface SectionedConfigInterface
      * getter calls read from physical store.
      *
      * Implementations which cannot do this, must ignore call.
+     *
+     * It is allowed that this method does nothing.
      *
      * @param string $section
      *

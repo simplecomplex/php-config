@@ -34,7 +34,7 @@ namespace SimpleComplex\Config;
 interface ConfigInterface
 {
     /**
-     * Fetches a value from the configuration store.
+     * Fetches an item from the configuration store.
      *
      * @param string $key
      * @param mixed|null $default
@@ -47,7 +47,9 @@ interface ConfigInterface
     public function get(string $key, $default = null);
 
     /**
-     * Persists data in the configuration store, uniquely referenced by a key.
+     * Saves/overwrites an item in the configuration store.
+     *
+     * It is allowed that this method does nothing.
      *
      * @param string $key
      * @param mixed $value
@@ -63,6 +65,8 @@ interface ConfigInterface
     /**
      * Delete an item from the configuration store.
      *
+     * It is allowed that this method does nothing.
+     *
      * @param string $key
      *
      * @return bool
@@ -73,7 +77,7 @@ interface ConfigInterface
     public function delete(string $key) : bool;
 
     /**
-     * Obtains multiple config items by their unique keys.
+     * Fetches multiple config items by keys.
      *
      * @param array|object $keys
      * @param mixed|null $default
@@ -87,7 +91,9 @@ interface ConfigInterface
     public function getMultiple($keys, $default = null);
 
     /**
-     * Persists a set of key => value pairs in the configuration store.
+     * Sets multiple config items by keys.
+     *
+     * It is allowed that this method does nothing.
      *
      * @param array|object $values
      *

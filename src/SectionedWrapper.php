@@ -19,6 +19,10 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * Enables classes using configuration to support SectionedConfigInterface
  * _and_ ConfigInterface transparently.
  *
+ * Weird but effective pattern.
+ *
+ * @see EnvSectionedConfig
+ *
  * @property-read string $name
  *      Name of internal ConfigInterface instance.
  *
