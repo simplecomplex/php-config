@@ -1,3 +1,14 @@
+SimpleComplex/Config 1.x, 2017-06-24
+------------------------------------
+- IniConfigBase is of course an abstract class; even if it doesn't declare
+  abstract methods.
+- SectionedWrapper, IniConfig and IniSectionedConfig shan't have getInstance()
+  method, because it doesn't make sense as a general principle for configuration
+  classes. Whereas EnvConfig and EnvSectionedConfig can have getInstance()
+  method, because there can only be a single set of environment variables.
+- Qualify IniConfigBase cache store name.
+- Convenience class Config, in front of IniSectionedConfig.
+
 SimpleComplex/Config 1.x, 2017-06-21
 ------------------------------------
 - Don't use 'iterable' type; effectively useless because stdClass is iterable

@@ -34,7 +34,7 @@ use SimpleComplex\Config\Exception\RuntimeException;
  *
  * @package SimpleComplex\Config
  */
-class IniConfigBase extends Explorable
+abstract class IniConfigBase extends Explorable
 {
     /**
      * @var string
@@ -63,6 +63,9 @@ class IniConfigBase extends Explorable
     /**
      * Whether to require and use [section]s of .ini file, or ignore them.
      *
+     * Not exposed as constructor parameter because extending classes must
+     * define whether that property is fixed or variable.
+     *
      * @var bool
      */
     protected $useSourceSections = false;
@@ -73,11 +76,6 @@ class IniConfigBase extends Explorable
      * @var ManageableCacheInterface
      */
     protected $cacheStore;
-
-    /**
-     * @var Utils
-     */
-    protected $utils;
 
 
     // Explorable.--------------------------------------------------------------
@@ -155,6 +153,11 @@ class IniConfigBase extends Explorable
     /**
      * Create or load configuration store.
      *
+     * Will return effectively identical instance on second call, when given
+     * the same arguments; an instance is basically a wrapped cache store.
+     *
+     * Cache store name is 'config_[arg name]'.
+     *
      * @uses CacheBroker::getStore()
      *
      * @param string $name
@@ -181,8 +184,8 @@ class IniConfigBase extends Explorable
         $this->name = $name;
 
         // We need a cache store, no matter what.
-        $this->cacheStore = CacheBroker::getInstance()->getStore($name);
-        // The cache store must have an empty() method.
+        $this->cacheStore = CacheBroker::getInstance()->getStore('config_' . $name);
+        // The cache store must implement ManageableCacheInterface.
         if (!($this->cacheStore instanceof ManageableCacheInterface)) {
             throw new ConfigurationException(
                 'Cache store must implement ManageableCacheInterface, saw type['
@@ -209,9 +212,6 @@ class IniConfigBase extends Explorable
                 $this->paths{$path_name} = static::PATH_DEFAULTS[$path_name];
             }
         }
-
-        // Secure dependency.
-        $this->utils = Utils::getInstance();
 
         // Don't import from .ini-files if our cache store has items.
         if (!$this->cacheStore->isEmpty()) {
@@ -243,6 +243,8 @@ class IniConfigBase extends Explorable
      */
     public function refresh() : bool
     {
+        $utils = Utils::getInstance();
+
         // Clear cache first, as promised.
         $this->cacheStore->clear();
 
@@ -250,7 +252,7 @@ class IniConfigBase extends Explorable
         $collection = [];
         foreach ($this->paths as $path_name => $path) {
             // Convert path to absolute if required, and check that it exists.
-            $absolute_path = $this->utils->resolvePath($path);
+            $absolute_path = $utils->resolvePath($path);
             if (!file_exists($absolute_path)) {
                 throw new ConfigurationException(
                     'The \'' . $path_name . '\' path doesn\'t exist, path[' . $absolute_path . ']'
@@ -291,11 +293,11 @@ class IniConfigBase extends Explorable
                                 // Union; two files within same dir shouldn't declare the
                                 // the same vars.
                                 // But if they do, the latter will rule.
-                                $settings_in_path += $this->utils->parseIniString($ini, true, true);
+                                $settings_in_path += $utils->parseIniString($ini, true, true);
                             }
                         }
                     } else {
-                        $settings_in_path += $this->utils->parseIniFile($path_file, false, true);
+                        $settings_in_path += $utils->parseIniFile($path_file, false, true);
                     }
                 }
                 if ($settings_in_path) {

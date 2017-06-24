@@ -38,6 +38,7 @@ class EnvConfig implements ConfigInterface
      */
     public static function getInstance(...$constructorParams)
     {
+        // Unsure about null ternary ?? for class and instance vars.
         if (!static::$instance) {
             static::$instance = new static(...$constructorParams);
         }

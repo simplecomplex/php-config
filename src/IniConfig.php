@@ -16,6 +16,9 @@ use SimpleComplex\Config\Exception\RuntimeException;
 /**
  * Simple configuration using .ini files as source, and PSR-16 cache as store.
  *
+ * Constructor returns effectively identical instance on second call, given
+ * the same arguments; an instance is basically a wrapped cache store.
+ *
  * A single instance is probably only usable for limited purposes.
  * Multiple instances could be usable in a compartmented configuration strategy,
  * where each instance only handles say a module/component's dedicated
@@ -33,31 +36,6 @@ use SimpleComplex\Config\Exception\RuntimeException;
  */
 class IniConfig extends IniConfigBase implements ConfigInterface
 {
-    /**
-     * Reference to first object instantiated via the getInstance() method,
-     * no matter which parent/child class the method was/is called on.
-     *
-     * @var IniConfig
-     */
-    protected static $instance;
-
-    /**
-     * First object instantiated via this method, disregarding class called on.
-     *
-     * @param mixed ...$constructorParams
-     *
-     * @return IniConfig
-     *      static, really, but IDE might not resolve that.
-     */
-    public static function getInstance(...$constructorParams)
-    {
-        if (!static::$instance) {
-            static::$instance = new static(...$constructorParams);
-        }
-        return static::$instance;
-    }
-
-
     // ConfigInterface.---------------------------------------------------------
 
     /**
@@ -221,6 +199,9 @@ class IniConfig extends IniConfigBase implements ConfigInterface
 
     /**
      * Create or load configuration store.
+     *
+     * Will return effectively identical instance on second call, when given
+     * the same arguments; an instance is basically a wrapped cache store.
      *
      * Defaults to ignore [section]s in .ini files.
      *

@@ -26,31 +26,6 @@ use SimpleComplex\Config\Exception\RuntimeException;
  */
 class SectionedWrapper implements SectionedConfigInterface
 {
-    /**
-     * Reference to first object instantiated via the getInstance() method,
-     * no matter which parent/child class the method was/is called on.
-     *
-     * @var SectionedWrapper
-     */
-    protected static $instance;
-
-    /**
-     * First object instantiated via this method, disregarding class called on.
-     *
-     * @param mixed ...$constructorParams
-     *
-     * @return SectionedWrapper
-     *      static, really, but IDE might not resolve that.
-     */
-    public static function getInstance(...$constructorParams)
-    {
-        if (!static::$instance) {
-            static::$instance = new static(...$constructorParams);
-        }
-        return static::$instance;
-    }
-
-
     // SectionedConfigInterface.------------------------------------------------
 
     /**

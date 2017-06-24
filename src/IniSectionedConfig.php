@@ -16,6 +16,9 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * Sectioned configuration using .ini files as source,
  * and PSR-16 cache as store.
  *
+ * Constructor returns effectively identical instance on second call, given
+ * the same arguments; an instance is basically a wrapped cache store.
+ *
  * Usable as single instance global configuration store.
  *
  * This implementation internally arranges sections as multi-dimensional arrays,
@@ -23,6 +26,8 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * as a whole.
  *
  * Requires and uses [section]s in .ini files.
+ *
+ * @see Config::getInstance()
  *
  * @see IniConfigBase::__construct()
  *      This class doesn't specialize parent constructor,
@@ -38,31 +43,6 @@ use SimpleComplex\Config\Exception\RuntimeException;
  */
 class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterface
 {
-    /**
-     * Reference to first object instantiated via the getInstance() method,
-     * no matter which parent/child class the method was/is called on.
-     *
-     * @var IniSectionedConfig
-     */
-    protected static $instance;
-
-    /**
-     * First object instantiated via this method, disregarding class called on.
-     *
-     * @param mixed ...$constructorParams
-     *
-     * @return IniSectionedConfig
-     *      static, really, but IDE might not resolve that.
-     */
-    public static function getInstance(...$constructorParams)
-    {
-        if (!static::$instance) {
-            static::$instance = new static(...$constructorParams);
-        }
-        return static::$instance;
-    }
-
-
     // SectionedConfigInterface.------------------------------------------------
 
     /**

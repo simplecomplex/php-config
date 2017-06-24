@@ -36,6 +36,7 @@ class EnvSectionedConfig extends SectionedWrapper
      */
     public static function getInstance(...$constructorParams)
     {
+        // Unsure about null ternary ?? for class and instance vars.
         if (!static::$instance) {
             static::$instance = new static(...$constructorParams);
         }
