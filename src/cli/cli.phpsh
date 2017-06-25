@@ -71,7 +71,7 @@ use SimpleComplex\Config\CliConfig;
  *      Return value of the executed command, if any.
  *      May well exit.
  */
-function cli_config()
+function simplecomplex_config_cli()
 {
     // Declares JsonLog's CLI commands, and registers them to CliEnvironment.
     new CliConfig();
@@ -80,4 +80,4 @@ function cli_config()
     // to it's provider (in this case CliJsonLog or CliEnvironment self).
     return CliEnvironment::getInstance()->forwardMatchedCommand();
 }
-cli_config();
+simplecomplex_config_cli();

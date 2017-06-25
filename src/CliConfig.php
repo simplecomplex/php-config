@@ -18,7 +18,7 @@ use SimpleComplex\Utils\CliCommand;
  *
  * Expose/execute config commands.
  *
- * @see cli_config()
+ * @see simplecomplex_config_cli()
  *
  * @see IniSectionedConfig::get()
  * @see IniSectionedConfig::set()
