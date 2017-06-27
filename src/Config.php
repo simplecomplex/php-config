@@ -29,6 +29,9 @@ class Config extends IniSectionedConfig
      * First object instantiated via this method and with that arg name,
      * disregarding class called on.
      *
+     * @deprecated Use a dependency injection container instead.
+     * @see \SimpleComplex\Utils\Dependency
+     *
      * @param string $name
      *      Default: global
      *
