@@ -1,3 +1,7 @@
+SimpleComplex/Config 1.x, 2017-06-28
+------------------------------------
+- Use dependency injection container instead of getInstance() when possible.
+
 SimpleComplex/Config 1.x, 2017-06-24
 ------------------------------------
 - IniConfigBase is of course an abstract class; even if it doesn't declare

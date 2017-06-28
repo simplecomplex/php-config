@@ -12,6 +12,7 @@ namespace SimpleComplex\Config;
 use SimpleComplex\Utils\CliCommandInterface;
 use SimpleComplex\Utils\CliEnvironment;
 use SimpleComplex\Utils\CliCommand;
+use SimpleComplex\Utils\Dependency;
 
 /**
  * CLI only.
@@ -39,6 +40,16 @@ class CliConfig implements CliCommandInterface
      * @var string
      */
     const COMMAND_PROVIDER_ALIAS = 'config';
+
+    /**
+     * @var string
+     */
+    const CLASS_CONFIG = Config::class;
+
+    /**
+     * @var string
+     */
+    const CLASS_INSPECT = '\\SimpleComplex\\Inspect\\Inspect';
 
     /**
      * Registers Config CliCommands at CliEnvironment.
@@ -128,11 +139,6 @@ class CliConfig implements CliCommandInterface
     }
 
     /**
-     * @var string
-     */
-    const CLASS_CONFIG = Config::class;
-
-    /**
      * @var CliCommand
      */
     protected $command;
@@ -143,26 +149,12 @@ class CliConfig implements CliCommandInterface
     protected $environment;
 
     /**
-     * To use class extending Inspect, call [ExtendedInspect]::getInstance()
-     * before instantiating this class.
-     *
-     * @return \SimpleComplex\Inspect\Inspect|null
-     */
-    protected function getInspectInstance()
-    {
-        $class = '\\SimpleComplex\\Inspect\\Inspect';
-        if (class_exists($class)) {
-            return new $class();
-        }
-        return null;
-    }
-
-    /**
      * @return mixed
      *      Exits if option 'print'.
      */
     protected function cmdGet()
     {
+        $container = Dependency::container();
         // Validate input. ---------------------------------------------
         $store = '';
         if (empty($this->command->arguments['store'])) {
@@ -231,9 +223,14 @@ class CliConfig implements CliCommandInterface
         }
         // Check if the command is doable.------------------------------
         // Nothing to check here.
-        $config_class = static::CLASS_CONFIG;
-        /** @var IniSectionedConfig $config_store */
-        $config_store = forward_static_call_array($config_class . '::getInstance', [$store]);
+        if ($store == 'global' && $container->has('config')) {
+            /** @var IniSectionedConfig $config_store */
+            $config_store = $container->get('config');
+        } else {
+            $config_class = static::CLASS_CONFIG;
+            /** @var IniSectionedConfig $config_store */
+            $config_store = new $config_class($store);
+        }
         // Do it.
         if ($all_keys) {
             if (!$config_store->has($section, '*')) {
@@ -260,11 +257,20 @@ class CliConfig implements CliCommandInterface
             return $value;
         }
         $this->environment->echoMessage('');
-        if ($inspect && ($inspect = $this->getInspectInstance())) {
-            $this->environment->echoMessage($inspect->inspect($value)->toString(true));
-        } else {
-            $this->environment->echoMessage(json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        if ($inspect) {
+            $inspector = null;
+            if ($container->has('inspector')) {
+                $inspector = $container->get('inspector');
+            } elseif (class_exists(static::CLASS_INSPECT)) {
+                $class_inspect = static::CLASS_INSPECT;
+                $inspector = new $class_inspect();
+            }
+            if ($inspector) {
+                $this->environment->echoMessage($inspector->inspect($value)->toString(true));
+            }
+            exit;
         }
+        $this->environment->echoMessage(json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
         exit;
     }
 
@@ -274,6 +280,7 @@ class CliConfig implements CliCommandInterface
      */
     protected function cmdSet() /*: void*/
     {
+        $container = Dependency::container();
         // Validate input. ---------------------------------------------
         $store = '';
         if (empty($this->command->arguments['store'])) {
@@ -393,9 +400,14 @@ class CliConfig implements CliCommandInterface
         }
         // Check if the command is doable.------------------------------
         // Nothing to check here.
-        $config_class = static::CLASS_CONFIG;
-        /** @var IniSectionedConfig $config_store */
-        $config_store = forward_static_call_array($config_class . '::getInstance', [$store]);
+        if ($store == 'global' && $container->has('config')) {
+            /** @var IniSectionedConfig $config_store */
+            $config_store = $container->get('config');
+        } else {
+            $config_class = static::CLASS_CONFIG;
+            /** @var IniSectionedConfig $config_store */
+            $config_store = new $config_class($store);
+        }
         // Do it.
         if (!$config_store->set($section, $key, $converted_value)) {
             $this->environment->echoMessage(
@@ -419,6 +431,7 @@ class CliConfig implements CliCommandInterface
      */
     protected function cmdDelete() /*: void*/
     {
+        $container = Dependency::container();
         // Validate input. ---------------------------------------------
         $store = '';
         if (empty($this->command->arguments['store'])) {
@@ -488,9 +501,14 @@ class CliConfig implements CliCommandInterface
         }
         // Check if the command is doable.------------------------------
         // Nothing to check here.
-        $config_class = static::CLASS_CONFIG;
-        /** @var IniSectionedConfig $config_store */
-        $config_store = forward_static_call_array($config_class . '::getInstance', [$store]);
+        if ($store == 'global' && $container->has('config')) {
+            /** @var IniSectionedConfig $config_store */
+            $config_store = $container->get('config');
+        } else {
+            $config_class = static::CLASS_CONFIG;
+            /** @var IniSectionedConfig $config_store */
+            $config_store = new $config_class($store);
+        }
         // Do it.
         if (!$config_store->delete($section, $key)) {
             $this->environment->echoMessage(
@@ -514,6 +532,7 @@ class CliConfig implements CliCommandInterface
      */
     protected function cmdRefresh() /*: void*/
     {
+        $container = Dependency::container();
         // Validate input. ---------------------------------------------
         $store = '';
         if (empty($this->command->arguments['store'])) {
@@ -561,9 +580,14 @@ class CliConfig implements CliCommandInterface
         }
         // Check if the command is doable.------------------------------
         // Nothing to check here.
-        $config_class = static::CLASS_CONFIG;
-        /** @var IniSectionedConfig $config_store */
-        $config_store = forward_static_call_array($config_class . '::getInstance', [$store]);
+        if ($store == 'global' && $container->has('config')) {
+            /** @var IniSectionedConfig $config_store */
+            $config_store = $container->get('config');
+        } else {
+            $config_class = static::CLASS_CONFIG;
+            /** @var IniSectionedConfig $config_store */
+            $config_store = new $config_class($store);
+        }
         // Do it.
         if (!$config_store->refresh()) {
             $this->environment->echoMessage('Failed to refresh config store[' . $store . '].', 'error');
