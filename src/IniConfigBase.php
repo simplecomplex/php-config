@@ -52,6 +52,8 @@ abstract class IniConfigBase extends Explorable
      *
      * Base configuration should work in dev/test environments.
      * Overriding configuration should consist of productions settings.
+     *
+     * Overriding paths (not 'base') are allowed to be empty; as in 'ignore'.
      */
     const PATH_DEFAULTS = [
         'base' => '../conf/ini/base',
@@ -75,6 +77,18 @@ abstract class IniConfigBase extends Explorable
      * @var bool
      */
     protected $useSourceSections = false;
+
+    /**
+     * Concat section and key inside setters and getters (with a delimiter),
+     * and on the cache-level (cache key becomes section+delimiter+key).
+     *
+     * Only relevant when useSourceSections:true.
+     *
+     * @see IniSectionedFlatConfig
+     *
+     * @var string|null
+     */
+    protected $sectionKeyDelimiter;
 
     /**
      * Config's cache store.
@@ -264,6 +278,10 @@ abstract class IniConfigBase extends Explorable
         // Load all variables from .ini file sources.
         $collection = [];
         foreach ($this->paths as $path_name => $path) {
+            // Overriding paths are allowed to be empty; as in 'ignore'.
+            if (!$path && $path_name != 'base') {
+                continue;
+            }
             // Convert path to absolute if required, and check that it exists.
             $absolute_path = $utils->resolvePath($path);
             if (!file_exists($absolute_path)) {
@@ -331,6 +349,24 @@ abstract class IniConfigBase extends Explorable
 
         // Pass to cache.
         if ($collection) {
+            if ($this->useSourceSections && $this->sectionKeyDelimiter) {
+                // Flatten sections+keys.
+                $concatted = [];
+                foreach ($collection as $section => $arr_subs) {
+                    foreach ($arr_subs as $key => $value) {
+                        $concat_key = $section . $this->sectionKeyDelimiter . $key;
+                        // Check that the final key isn't too long.
+                        if (!ConfigKey::validate($concat_key)) {
+                            throw new ConfigurationException(
+                                'Concatted section+delimiter+key key is not valid, concatted[' . $concat_key . '].'
+                            );
+                        }
+                        $concatted[$concat_key] = $value;
+                    }
+                }
+                $collection =& $concatted;
+            }
+
             if (!$this->cacheStore->setMultiple($collection)) {
                 // Unlikely, but safer.
                 throw new RuntimeException(

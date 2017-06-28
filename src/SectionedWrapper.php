@@ -35,7 +35,7 @@ class SectionedWrapper implements SectionedConfigInterface
     // SectionedConfigInterface.------------------------------------------------
 
     /**
-     * Arg string or key is allowed to be empty.
+     * Arg section or key is allowed to be empty.
      *
      * Does _not_ support wildcard * for arg key.
      *
@@ -49,7 +49,7 @@ class SectionedWrapper implements SectionedConfigInterface
     }
 
     /**
-     * Arg string or key is allowed to be empty.
+     * Arg section or key is allowed to be empty.
      *
      * @see SectionedConfigInterface::set()
      *
@@ -61,7 +61,7 @@ class SectionedWrapper implements SectionedConfigInterface
     }
 
     /**
-     * Arg string or key is allowed to be empty.
+     * Arg section or key is allowed to be empty.
      *
      * @see SectionedConfigInterface::delete()
      *
@@ -73,7 +73,7 @@ class SectionedWrapper implements SectionedConfigInterface
     }
 
     /**
-     * Arg string or key is allowed to be empty.
+     * Arg section or key is allowed to be empty.
      *
      * @see SectionedConfigInterface::getMultiple()
      *
@@ -89,7 +89,7 @@ class SectionedWrapper implements SectionedConfigInterface
     }
 
     /**
-     * Arg string or key is allowed to be empty.
+     * Arg section or key is allowed to be empty.
      *
      * @see SectionedConfigInterface::setMultiple()
      *
@@ -105,7 +105,7 @@ class SectionedWrapper implements SectionedConfigInterface
     }
 
     /**
-     * Arg string or key is allowed to be empty.
+     * Arg section or key is allowed to be empty.
      *
      * Does _not_ support wildcard * for arg key.
      *

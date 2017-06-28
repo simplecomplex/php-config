@@ -16,13 +16,13 @@ use SimpleComplex\Config\Exception\RuntimeException;
 /**
  * Simple configuration using .ini files as source, and PSR-16 cache as store.
  *
- * Constructor returns effectively identical instance on second call, given
- * the same arguments; an instance is basically a wrapped cache store.
- *
  * A single instance is probably only usable for limited purposes.
  * Multiple instances could be usable in a compartmented configuration strategy,
  * where each instance only handles say a module/component's dedicated
  * configuration.
+ *
+ * Constructor returns effectively identical instance on second call, given
+ * the same arguments; an instance is basically a wrapped cache store.
  *
  * Defaults to ignore [section]s in .ini files.
  *
@@ -117,7 +117,7 @@ class IniConfig extends IniConfigBase implements ConfigInterface
     }
 
     /**
-     * Obtains multiple config items by their unique keys, from cache.
+     * Retrieves multiple config items by their unique keys, from cache.
      *
      * @param array|object $keys
      * @param mixed $default
@@ -193,6 +193,20 @@ class IniConfig extends IniConfigBase implements ConfigInterface
     {
         return $this->cacheStore->has($key);
     }
+
+
+    // Override IniConfigBase.--------------------------------------------------
+
+    /**
+     * Paths to where configuration .ini-files reside.
+     *
+     * Base configuration should work in dev/test environments.
+     * Overriding configuration should consist of productions settings.
+     */
+    const PATH_DEFAULTS = [
+        'base' => '../conf/ini-flat/base',
+        'override' => '../conf/ini-flat/operations',
+    ];
 
 
     // Custom/business.--------------------------------------------------------

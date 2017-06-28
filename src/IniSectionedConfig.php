@@ -16,14 +16,21 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * Sectioned configuration using .ini files as source,
  * and PSR-16 cache as store.
  *
- * Constructor returns effectively identical instance on second call, given
- * the same arguments; an instance is basically a wrapped cache store.
- *
  * Usable as single instance global configuration store.
  *
  * This implementation internally arranges sections as multi-dimensional arrays,
  * but - as recommended - only exposes section children; not the section
  * as a whole.
+ *
+ * Best for contexts where
+ * -----------------------
+ * one expects to access many/all keys of a section within a limited procedure;
+ * allowing the use of remember() and forget().
+ * Due to the internal multi-dimensional array structure; preferably
+ * 'short' sections and thus few cache reads.
+ *
+ * Constructor returns effectively identical instance on second call, given
+ * the same arguments; an instance is basically a wrapped cache store.
  *
  * Requires and uses [section]s in .ini files.
  *
@@ -181,7 +188,7 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
     }
 
     /**
-     * Obtains multiple config items by their unique keys, from cache.
+     * Retrieves multiple config items by their unique keys, from cache.
      *
      * @param string $section
      * @param array|object $keys
@@ -328,7 +335,8 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
         unset($this->memory[$section]);
     }
 
-    // Custom/business.--------------------------------------------------------
+
+    // Override IniConfigBase.--------------------------------------------------
 
     /**
      * Requires and uses [section]s of .ini file.
@@ -336,6 +344,9 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      * @var bool
      */
     protected $useSourceSections = true;
+
+
+    // Custom/business.--------------------------------------------------------
 
     /**
      * @var array
