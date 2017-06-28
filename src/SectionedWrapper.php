@@ -18,6 +18,8 @@ use SimpleComplex\Config\Exception\RuntimeException;
  *
  * Enables classes using configuration to support SectionedConfigInterface
  * _and_ ConfigInterface transparently.
+ * If a using class instance receives a ConfigInterface it can wrap that
+ * as a SectionedConfigInterface.
  *
  * Weird but effective pattern.
  *

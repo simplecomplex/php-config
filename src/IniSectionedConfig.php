@@ -27,7 +27,7 @@ use SimpleComplex\Config\Exception\RuntimeException;
  *
  * Requires and uses [section]s in .ini files.
  *
- * @see Config::getInstance()
+ * @see Config
  *
  * @see IniConfigBase::__construct()
  *      This class doesn't specialize parent constructor,

@@ -263,12 +263,12 @@ class CliConfig implements CliCommandInterface
                 $inspector = $container->get('inspector');
             } elseif (class_exists(static::CLASS_INSPECT)) {
                 $class_inspect = static::CLASS_INSPECT;
-                $inspector = new $class_inspect();
+                $inspector = new $class_inspect($container->has('config') ? $container->get('config') : null);
             }
             if ($inspector) {
                 $this->environment->echoMessage($inspector->inspect($value)->toString(true));
+                exit;
             }
-            exit;
         }
         $this->environment->echoMessage(json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
         exit;

@@ -11,6 +11,7 @@ namespace SimpleComplex\Config;
 
 use SimpleComplex\Utils\Explorable;
 use SimpleComplex\Utils\Utils;
+use SimpleComplex\Utils\Dependency;
 use SimpleComplex\Utils\PathFileList;
 use SimpleComplex\Cache\CacheBroker;
 use SimpleComplex\Cache\ManageableCacheInterface;
@@ -36,6 +37,11 @@ use SimpleComplex\Config\Exception\RuntimeException;
  */
 abstract class IniConfigBase extends Explorable
 {
+    /**
+     * @var string
+     */
+    const CLASS_CACHE_BROKER = CacheBroker::class;
+
     /**
      * @var string
      */
@@ -183,8 +189,15 @@ abstract class IniConfigBase extends Explorable
         }
         $this->name = $name;
 
+        $container = Dependency::container();
         // We need a cache store, no matter what.
-        $this->cacheStore = CacheBroker::getInstance()->getStore('config_' . $name);
+        if ($container->has('cache-broker')) {
+            $cache_broker = $container->get('cache-broker');
+        } else {
+            $cache_broker_class = static::CLASS_CACHE_BROKER;
+            $cache_broker = new $cache_broker_class();
+        }
+        $this->cacheStore = $cache_broker->getStore('config_' . $name);
         // The cache store must implement ManageableCacheInterface.
         if (!($this->cacheStore instanceof ManageableCacheInterface)) {
             throw new ConfigurationException(

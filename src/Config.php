@@ -16,6 +16,9 @@ namespace SimpleComplex\Config;
  * SectionedConfigInterface implementation.
  * Then to shift, simply extend another class than this.
  *
+ * @dependency-injection-container config
+ *      Suggested ID of the Config 'global' instance.
+ *
  * @package SimpleComplex\Config
  */
 class Config extends IniSectionedConfig
