@@ -34,6 +34,7 @@ class Config extends IniSectionedConfig
      *
      * @deprecated Use a dependency injection container instead.
      * @see \SimpleComplex\Utils\Dependency
+     * @see \Slim\Container
      *
      * @param string $name
      *      Default: global
