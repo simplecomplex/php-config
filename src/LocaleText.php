@@ -22,35 +22,32 @@ class LocaleText extends IniSectionedFlatConfig
 {
 
     /**
-     * Paths to where localisation .ini-files reside.
-     *
-     * 'override' defaults to empty; as in 'ignore'.
+     * No default paths.
      */
-    const PATH_DEFAULTS = [
-        'base' => 'services/locale/text',
-        'override' => '',
-    ];
+    const PATH_DEFAULTS = [];
+
+    /**
+     * Allows any paths; any names and number of.
+     *
+     * Relative path is relative to document root.
+     *
+     * @var string[]
+     */
+    protected $paths = [];
 
     /**
      * LocaleText constructor.
      *
      * @param string $language
-     *      Lisp-cased; 'en' or 'en-us'.
-     * @param array $options {
-     *      @var array $paths
-     * }
+     *      Lisp-cased; 'en' or 'en-gb'.
+     * @param string[] $paths
      */
-    public function __construct(string $language, array $options = [])
+    public function __construct(string $language, array $paths)
     {
         if (!$language) {
             throw new \InvalidArgumentException('Arg language cannot be empty.');
         }
 
-        // @todo: there's a conflict with IniConfigBase paths (see ucfirst).
-        if (!empty($options['paths'])) {
-
-        }
-
-        parent::__construct('locale-text_' . $language, $options);
+        parent::__construct('locale-text_' . $language, $paths);
     }
 }

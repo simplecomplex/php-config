@@ -1,3 +1,8 @@
+SimpleComplex/Config 1.x, 2017-06-29
+------------------------------------
+- New config type IniSectionedFlatConfig, which uses .ini file [section]s
+  but flattens (concats) section+key in accessors and cache store.
+
 SimpleComplex/Config 1.x, 2017-06-28
 ------------------------------------
 - Use dependency injection container instead of getInstance() when possible.

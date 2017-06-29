@@ -15,6 +15,7 @@ use SimpleComplex\Utils\Dependency;
 use SimpleComplex\Utils\PathFileList;
 use SimpleComplex\Cache\CacheBroker;
 use SimpleComplex\Cache\ManageableCacheInterface;
+use SimpleComplex\Config\Exception\LogicException;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\OutOfBoundsException;
 use SimpleComplex\Config\Exception\ConfigurationException;
@@ -26,8 +27,9 @@ use SimpleComplex\Config\Exception\RuntimeException;
  *
  * @property-read string $name
  * @property-read bool $useSourceSections
- * @property-read string $pathBase
- * @property-read string $pathOverride
+ * @property-read string|null $sectionKeyDelimiter
+ * @property-read array $paths
+ *      Copy, to secure read-only status.
  * @property-read ManageableCacheInterface $cacheStore
  *
  * @see \Psr\SimpleCache\CacheInterface
@@ -48,25 +50,11 @@ abstract class IniConfigBase extends Explorable
     protected $name;
 
     /**
-     * Paths to where configuration .ini-files reside.
+     * Config's cache store.
      *
-     * Base configuration should work in dev/test environments.
-     * Overriding configuration should consist of productions settings.
-     *
-     * Overriding paths (not 'base') are allowed to be empty; as in 'ignore'.
+     * @var ManageableCacheInterface
      */
-    const PATH_DEFAULTS = [
-        'base' => '../conf/ini/base',
-        'override' => '../conf/ini/operations',
-    ];
-
-    /**
-     * @var string[]
-     */
-    protected $paths = [
-        'base' => '',
-        'override' => '',
-    ];
+    protected $cacheStore;
 
     /**
      * Whether to require and use [section]s of .ini file, or ignore them.
@@ -84,6 +72,9 @@ abstract class IniConfigBase extends Explorable
      *
      * Only relevant when useSourceSections:true.
      *
+     * Not exposed as constructor parameter because extending classes must
+     * define whether that property is fixed or variable.
+     *
      * @see IniSectionedFlatConfig
      *
      * @var string|null
@@ -91,11 +82,22 @@ abstract class IniConfigBase extends Explorable
     protected $sectionKeyDelimiter;
 
     /**
-     * Config's cache store.
+     * In the base class there are no path defaults.
      *
-     * @var ManageableCacheInterface
+     * Relative path is relative to document root.
+     *
+     * @var string[]
      */
-    protected $cacheStore;
+    const PATH_DEFAULTS = [];
+
+    /**
+     * The base class allows any paths; any names and number of.
+     *
+     * Relative path is relative to document root.
+     *
+     * @var string[]
+     */
+    protected $paths = [];
 
 
     // Explorable.--------------------------------------------------------------
@@ -109,8 +111,8 @@ abstract class IniConfigBase extends Explorable
     protected $explorableIndex = [
         'name',
         'useSourceSections',
-        'pathBase',
-        'pathOverride',
+        'sectionKeyDelimiter',
+        'paths',
         'cacheStore',
     ];
 
@@ -125,9 +127,10 @@ abstract class IniConfigBase extends Explorable
     public function __get($name)
     {
         switch ('' . $name) {
-            case 'pathBase':
-            case 'pathOverride':
-                return $this->paths['' . $name == 'pathBase' ? 'base' : 'override'];
+            case 'paths':
+                // Return copy to secure read-only status.
+                $paths = $this->paths;
+                return $paths;
             default:
                 if (in_array($name, $this->explorableIndex, true)) {
                     return $this->{$name};
@@ -181,22 +184,24 @@ abstract class IniConfigBase extends Explorable
      * @uses CacheBroker::getStore()
      *
      * @param string $name
-     * @param array $options {
-     *      @var string $pathBase = ''
-     *          Empty: class default (PATH_BASE_DEFAULT) rules.
-     *      @var string $pathOverride = ''
-     *          Empty: class default (PATH_OVERRIDE_DEFAULT) rules.
-     * }
-     * @throws \TypeError
+     * @param string[] $paths
+     *      Relative path is relative to document root.
+     *
      * @throws InvalidArgumentException
-     *      Bad value of an arg options bucket.
+     *      Invalid arg $name.
+     * @throws \TypeError
+     *      A path bucket value isn't string.
      * @throws ConfigurationException
      *      CacheBroker returns cache store which isn't ManageableCacheInterface.
-     *      Propagated, if pathBase or pathOverride doesn't exist or isn't directory.
+     *      If no (arg paths * default paths) path is non-empty.
+     *      Propagated, if a path doesn't exist or isn't directory.
+     * @throws LogicException
+     *      Current (or parent) class declares a fixed set of path names
+     *      but doesn't declare equivalent PATH_DEFAULTS.
      * @throws \Throwable
      *      Propagated.
      */
-    public function __construct(string $name, array $options = [])
+    public function __construct(string $name, array $paths = [])
     {
         if (!ConfigKey::validate($name)) {
             throw new InvalidArgumentException('Arg name is not valid, name[' . $name . '].');
@@ -225,19 +230,46 @@ abstract class IniConfigBase extends Explorable
         $this->cacheStore->setTtlIgnore(true);
         $this->cacheStore->setTtlDefault(ManageableCacheInterface::TTL_NONE);
 
-        $paths = array_keys($this->paths);
-        foreach ($paths as $path_name) {
-            $opt_name = 'path' . ucfirst($path_name);
-            if (!empty($options[$opt_name])) {
-                if (!is_string($options[$opt_name])) {
-                    throw new \TypeError('Arg options[' . $opt_name . '] type['
-                        . (!is_object($options[$opt_name]) ? gettype($options[$opt_name]) :
-                            get_class($options[$opt_name])) . '] is not string.');
+        // Fixed or unlimited set of paths.
+        if ($this->paths) {
+            $fixed_path_range = true;
+            // Use class' path names.
+            $path_names = array_keys($this->paths);
+        } else {
+            $fixed_path_range = false;
+            // Use arg paths' path names.
+            $path_names = array_keys($paths);
+        }
+        $n_non_empty_paths = 0;
+        foreach ($path_names as $path_name) {
+            if (!empty($paths[$path_name])) {
+                if (!is_string($paths[$path_name])) {
+                    throw new \TypeError('Arg array bucket paths[' . $path_name . '] type['
+                        . (!is_object($paths[$path_name]) ? gettype($paths[$path_name]) :
+                            get_class($paths[$path_name])) . '] is not string.');
                 }
-                $this->paths{$path_name} = $options[$opt_name];
-            } else {
+                $this->paths{$path_name} = $paths[$path_name];
+                if ($paths[$path_name]) {
+                    ++$n_non_empty_paths;
+                }
+            } elseif ($fixed_path_range) {
+                if (!isset(static::PATH_DEFAULTS[$path_name])) {
+                    throw new LogicException(
+                        'Cache store must implement ManageableCacheInterface, saw type['
+                        . (!is_object($this->cacheStore) ? gettype($this->cacheStore) : get_class($this->cacheStore)) . '].'
+                    );
+                }
                 $this->paths{$path_name} = static::PATH_DEFAULTS[$path_name];
+                if ($this->paths{$path_name}) {
+                    ++$n_non_empty_paths;
+                }
             }
+        }
+        if (!$n_non_empty_paths) {
+            throw new ConfigurationException(
+                'At least one path must be non-empty, default paths[' . join(', ', static::PATH_DEFAULTS)
+                . '], arg paths[' . join(', ', $paths) . '].'
+            );
         }
 
         // Don't import from .ini-files if our cache store has items.
@@ -263,6 +295,7 @@ abstract class IniConfigBase extends Explorable
      *
      * @throws ConfigurationException
      *      A path doesn't exist or isn't directory.
+     *      No configuration item found at all.
      *      Using source sections, an .ini file doesn't declare a [section]
      *      before flat vars.
      * @throws \Throwable
@@ -278,8 +311,7 @@ abstract class IniConfigBase extends Explorable
         // Load all variables from .ini file sources.
         $collection = [];
         foreach ($this->paths as $path_name => $path) {
-            // Overriding paths are allowed to be empty; as in 'ignore'.
-            if (!$path && $path_name != 'base') {
+            if (!$path) {
                 continue;
             }
             // Convert path to absolute if required, and check that it exists.
@@ -345,6 +377,11 @@ abstract class IniConfigBase extends Explorable
                     }
                 }
             }
+        }
+        if (!$collection) {
+            throw new ConfigurationException(
+                'Found no configuration item at all.'
+            );
         }
 
         // Pass to cache.

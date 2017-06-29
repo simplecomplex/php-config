@@ -30,6 +30,9 @@ use SimpleComplex\Config\Exception\RuntimeException;
  *
  * Requires and uses [section]s in .ini files.
  *
+ * @see \SimpleComplex\Locale\LocaleText
+ *      For example of use.
+ *
  * @property-read string $name
  * @property-read bool $useSourceSections
  * @property-read string $sectionKeyDelimiter
@@ -172,17 +175,6 @@ class IniSectionedFlatConfig extends IniConfigBase implements SectionedConfigInt
     // Override IniConfigBase.--------------------------------------------------
 
     /**
-     * Paths to where configuration .ini-files reside.
-     *
-     * Base configuration should work in dev/test environments.
-     * Overriding configuration should consist of productions settings.
-     */
-    const PATH_DEFAULTS = [
-        'base' => '../conf/ini-sectioned-flat/base',
-        'override' => '../conf/ini-sectioned-flat/operations',
-    ];
-
-    /**
      * Whether to require and use [section]s of .ini file, or ignore them.
      *
      * @var bool
@@ -197,22 +189,34 @@ class IniSectionedFlatConfig extends IniConfigBase implements SectionedConfigInt
      */
     protected $sectionKeyDelimiter = '_-_';
 
-
-    // Explorable.--------------------------------------------------------------
+    /**
+     * Paths to where configuration .ini-files reside.
+     *
+     * Base configuration should work in dev/test environments.
+     * Overriding configuration should consist of productions settings.
+     *
+     * Relative path is relative to document root.
+     *
+     * @var string[]
+     */
+    const PATH_DEFAULTS = [
+        'base' => '../conf/ini-sectioned-flat/base',
+        'override' => '../conf/ini-sectioned-flat/operations',
+    ];
 
     /**
-     * List of names of members (private, protected or public) which should be
-     * exposed as accessibles in count()'ing and foreach'ing.
+     * Only these two path buckets allowed.
      *
-     * @var array
+     * If overriding class wishes to use other paths (any names and number of)
+     * it should override this property.
+     *
+     * Relative path is relative to document root.
+     *
+     * @var string[]
      */
-    protected $explorableIndex = [
-        'name',
-        'useSourceSections',
-        'sectionKeyDelimiter',
-        'pathBase',
-        'pathOverride',
-        'cacheStore',
+    protected $paths = [
+        'base' => '',
+        'override' => '',
     ];
 
 

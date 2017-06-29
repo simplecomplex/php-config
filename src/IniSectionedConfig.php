@@ -42,8 +42,9 @@ use SimpleComplex\Config\Exception\RuntimeException;
  *
  * @property-read string $name
  * @property-read bool $useSourceSections
- * @property-read string $pathBase
- * @property-read string $pathOverride
+ * @property-read string|null $sectionKeyDelimiter
+ * @property-read array $paths
+ *      Copy, to secure read-only status.
  * @property-read \SimpleComplex\Cache\ManageableCacheInterface $cacheStore
  *
  * @package SimpleComplex\Config
@@ -344,6 +345,36 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      * @var bool
      */
     protected $useSourceSections = true;
+
+    /**
+     * Paths to where configuration .ini-files reside.
+     *
+     * Base configuration should work in dev/test environments.
+     * Overriding configuration should consist of productions settings.
+     *
+     * Relative path is relative to document root.
+     *
+     * @var string[]
+     */
+    const PATH_DEFAULTS = [
+        'base' => '../conf/ini/base',
+        'override' => '../conf/ini/operations',
+    ];
+
+    /**
+     * Only these two path buckets allowed.
+     *
+     * If overriding class wishes to use other paths (any names and number of)
+     * it should override this property.
+     *
+     * Relative path is relative to document root.
+     *
+     * @var string[]
+     */
+    protected $paths = [
+        'base' => '',
+        'override' => '',
+    ];
 
 
     // Custom/business.--------------------------------------------------------

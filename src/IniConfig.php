@@ -28,8 +28,9 @@ use SimpleComplex\Config\Exception\RuntimeException;
  *
  * @property-read string $name
  * @property-read bool $useSourceSections
- * @property-read string $pathBase
- * @property-read string $pathOverride
+ * @property-read string|null $sectionKeyDelimiter
+ * @property-read array $paths
+ *      Copy, to secure read-only status.
  * @property-read \SimpleComplex\Cache\ManageableCacheInterface $cacheStore
  *
  * @package SimpleComplex\Config
@@ -202,10 +203,29 @@ class IniConfig extends IniConfigBase implements ConfigInterface
      *
      * Base configuration should work in dev/test environments.
      * Overriding configuration should consist of productions settings.
+     *
+     * Relative path is relative to document root.
+     *
+     * @var string[]
      */
     const PATH_DEFAULTS = [
         'base' => '../conf/ini-flat/base',
         'override' => '../conf/ini-flat/operations',
+    ];
+
+    /**
+     * Only these two path buckets allowed.
+     *
+     * If overriding class wishes to use other paths (any names and number of)
+     * it should override this property.
+     *
+     * Relative path is relative to document root.
+     *
+     * @var string[]
+     */
+    protected $paths = [
+        'base' => '',
+        'override' => '',
     ];
 
 
@@ -223,21 +243,23 @@ class IniConfig extends IniConfigBase implements ConfigInterface
      * @see IniConfigBase::refresh()
      *
      * @param string $name
+     * @param array $paths {
+     *      @var string $base
+     *          Default/empty: class default (PATH_BASE_DEFAULT) rules.
+     *      @var string $override
+     *          Default/empty: class default (PATH_OVERRIDE_DEFAULT) rules.
+     * }
      * @param array $options {
      *      @var bool $useSourceSections
      *          Default: class default (USE_SOURCE_SECTIONS_DEFAULT) rules.
-     *      @var string $pathBase
-     *          Default/empty: class default (PATH_BASE_DEFAULT) rules.
-     *      @var string $pathOverride
-     *          Default/empty: class default (PATH_OVERRIDE_DEFAULT) rules.
      * }
      * @throws \Throwable
      *      Propagated.
      */
-    public function __construct(string $name, array $options = [])
+    public function __construct(string $name, array $paths = [], array $options = [])
     {
         $this->useSourceSections = !empty($options['useSourceSections']);
 
-        parent::__construct($name, $options);
+        parent::__construct($name, $paths);
     }
 }
