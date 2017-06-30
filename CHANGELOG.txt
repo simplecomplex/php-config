@@ -1,3 +1,7 @@
+SimpleComplex/Config 1.x, 2017-06-30
+------------------------------------
+- .ini-based custom file extensions find filter.
+
 SimpleComplex/Config 1.x, 2017-06-29
 ------------------------------------
 - New config type IniSectionedFlatConfig, which uses .ini file [section]s

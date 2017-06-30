@@ -158,7 +158,7 @@ class SectionedWrapper implements SectionedConfigInterface
      */
     public function __get($name)
     {
-        if ('' . $name == 'name') {
+        if ($name == 'name') {
             return $this->config->name;
         }
         throw new OutOfBoundsException(get_class($this) . ' instance has no property[' . $name . '].');

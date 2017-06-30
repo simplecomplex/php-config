@@ -22,7 +22,7 @@ use SimpleComplex\Config\Exception\ConfigurationException;
 use SimpleComplex\Config\Exception\RuntimeException;
 
 /**
- * Helper for configuration classes using .ini files as source,
+ * Base class for configuration classes using .ini files as source,
  * and PSR-16 Simple Cache (+ ManageableCacheInterface) as store.
  *
  * @property-read string $name
@@ -30,6 +30,7 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * @property-read string|null $sectionKeyDelimiter
  * @property-read array $paths
  *      Copy, to secure read-only status.
+ * @property-read array $fileExtensions
  * @property-read ManageableCacheInterface $cacheStore
  *
  * @see \Psr\SimpleCache\CacheInterface
@@ -99,6 +100,18 @@ abstract class IniConfigBase extends Explorable
      */
     protected $paths = [];
 
+    /**
+     * @var array
+     */
+    const FILE_EXTENSTIONS = [
+        'ini',
+    ];
+
+    /**
+     * @var array
+     */
+    protected $fileExtensions;
+
 
     // Explorable.--------------------------------------------------------------
 
@@ -113,6 +126,7 @@ abstract class IniConfigBase extends Explorable
         'useSourceSections',
         'sectionKeyDelimiter',
         'paths',
+        'fileExtensions',
         'cacheStore',
     ];
 
@@ -126,11 +140,12 @@ abstract class IniConfigBase extends Explorable
      */
     public function __get($name)
     {
-        switch ('' . $name) {
+        switch ($name) {
             case 'paths':
+            case 'fileExtensions':
                 // Return copy to secure read-only status.
-                $paths = $this->paths;
-                return $paths;
+                $v = $this->{$name};
+                return $v;
             default:
                 if (in_array($name, $this->explorableIndex, true)) {
                     return $this->{$name};
@@ -207,6 +222,11 @@ abstract class IniConfigBase extends Explorable
             throw new InvalidArgumentException('Arg name is not valid, name[' . $name . '].');
         }
         $this->name = $name;
+
+        // Allow extending class constructor to define file extensions.
+        if (!$this->fileExtensions) {
+            $this->fileExtensions = static::FILE_EXTENSTIONS;
+        }
 
         $container = Dependency::container();
         // We need a cache store, no matter what.
@@ -327,7 +347,7 @@ abstract class IniConfigBase extends Explorable
                 );
             }
             // Find all .ini files in the path, recursively.
-            $files = (new PathFileList($absolute_path, ['ini']))->getArrayCopy();
+            $files = (new PathFileList($absolute_path, $this->fileExtensions))->getArrayCopy();
             if ($files) {
                 // Parse all .ini files in the path.
                 $settings_in_path = [];
@@ -341,7 +361,7 @@ abstract class IniConfigBase extends Explorable
                             // Remove comments and leading empty lines.
                             $ini = ltrim(
                                 preg_replace(
-                                    '/\n;[^\n]+\n/m',
+                                    '/\n;[^\n]*/m',
                                     "\n",
                                     "\n" . str_replace("\r", '', $ini)
                                 )
