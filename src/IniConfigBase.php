@@ -373,14 +373,17 @@ abstract class IniConfigBase extends Explorable
                                         . 'file[' . $path_file . '].'
                                     );
                                 }
-                                // Union; two files within same dir shouldn't declare the
-                                // the same vars.
-                                // But if they do, the latter will rule.
-                                $settings_in_path += $utils->parseIniString($ini, true, true);
+                                $settings_in_path = array_merge_recursive(
+                                    $settings_in_path,
+                                    $utils->parseIniString($ini, true, true)
+                                );
                             }
                         }
                     } else {
-                        $settings_in_path += $utils->parseIniFile($path_file, false, true);
+                        $settings_in_path = array_merge_recursive(
+                            $settings_in_path,
+                            $utils->parseIniFile($path_file, false, true)
+                        );
                     }
                 }
                 if ($settings_in_path) {
