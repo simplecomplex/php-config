@@ -68,6 +68,18 @@ abstract class IniConfigBase extends Explorable
     protected $useSourceSections = false;
 
     /**
+     * Whether to expect and escape/unescape illegal .ini key names.
+     *
+     * Illegal .ini key names are: null, yes, no, true, false, on, off, none.
+     *
+     * Not exposed as constructor parameter because extending classes must
+     * define whether that property is fixed or variable.
+     *
+     * @var bool
+     */
+    protected $escapeSourceKeys = false;
+
+    /**
      * Concat section and key inside setters and getters (with a delimiter),
      * and on the cache-level (cache key becomes section+delimiter+key).
      *
@@ -330,6 +342,7 @@ abstract class IniConfigBase extends Explorable
 
         // Load all variables from .ini file sources.
         $collection = [];
+        $n_files = 0;
         foreach ($this->paths as $path_name => $path) {
             if (!$path) {
                 continue;
@@ -338,12 +351,14 @@ abstract class IniConfigBase extends Explorable
             $absolute_path = $utils->resolvePath($path);
             if (!file_exists($absolute_path)) {
                 throw new ConfigurationException(
-                    'The \'' . $path_name . '\' path doesn\'t exist, path[' . $absolute_path . ']'
+                    'The ' . (!ctype_digit('' . $path_name) ? ('\'' . $path_name . '\'') : ('index[' . $path_name . ']'))
+                    . ' path doesn\'t exist, path[' . $absolute_path . ']'
                 );
             }
             if (!is_dir($absolute_path)) {
                 throw new ConfigurationException(
-                    'The \'' . $path_name . '\' path is not a directory, path[' . $absolute_path . ']'
+                    'The ' . (!ctype_digit('' . $path_name) ? ('\'' . $path_name . '\'') : ('index[' . $path_name . ']'))
+                    . ' path is not a directory, path[' . $absolute_path . ']'
                 );
             }
             // Find all .ini files in the path, recursively.
@@ -352,6 +367,7 @@ abstract class IniConfigBase extends Explorable
                 // Parse all .ini files in the path.
                 $settings_in_path = [];
                 foreach ($files as $path_file) {
+                    ++$n_files;
                     if ($this->useSourceSections) {
                         $ini = trim(
                             file_get_contents($path_file)
@@ -373,17 +389,26 @@ abstract class IniConfigBase extends Explorable
                                         . 'file[' . $path_file . '].'
                                     );
                                 }
-                                $settings_in_path = array_merge_recursive(
-                                    $settings_in_path,
-                                    $utils->parseIniString($ini, true, true)
-                                );
+                                if ($this->escapeSourceKeys) {
+                                    $ini = $utils->escapeIniKeys($ini);
+                                }
+                                $settings_in_file = $utils->parseIniString($ini, true, true);
+                                if ($this->escapeSourceKeys) {
+                                    $utils->unescapeIniKeys($settings_in_file, true);
+                                }
+                                $settings_in_path = array_merge_recursive($settings_in_path, $settings_in_file);
                             }
                         }
                     } else {
-                        $settings_in_path = array_merge_recursive(
-                            $settings_in_path,
-                            $utils->parseIniFile($path_file, false, true)
-                        );
+                        $ini = trim(file_get_contents($path_file));
+                        if ($this->escapeSourceKeys) {
+                            $ini = $utils->escapeIniKeys($ini);
+                        }
+                        $settings_in_file = $utils->parseIniString($ini, false, true);
+                        if ($this->escapeSourceKeys) {
+                            $utils->unescapeIniKeys($settings_in_file);
+                        }
+                        $settings_in_path = array_merge_recursive($settings_in_path, $settings_in_file);
                     }
                 }
                 if ($settings_in_path) {
@@ -402,6 +427,11 @@ abstract class IniConfigBase extends Explorable
             }
         }
         if (!$collection) {
+            if (!$n_files) {
+                throw new ConfigurationException(
+                    'Found no configuration files at all.'
+                );
+            }
             throw new ConfigurationException(
                 'Found no configuration item at all.'
             );

@@ -3,6 +3,9 @@ SimpleComplex/Config 1.x, 2017-06-30
 - .ini-based custom file extensions find filter.
 - Vars of a section used in more .ini files in same must be merged;
   not union'ed.
+- ctype_digit() is no good when non-string input.
+- Support escape/unescape of illegal .ini key names (yes, no etc.).
+- Err on no .ini files found, not just on no vars found.
 
 SimpleComplex/Config 1.x, 2017-06-29
 ------------------------------------

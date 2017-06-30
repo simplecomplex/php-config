@@ -328,7 +328,7 @@ class CliConfig implements CliCommandInterface
             } else {
                 $converted_value = $value = $this->command->arguments['value'];
                 if ($int) {
-                    if (!ctype_digit($value)) {
+                    if (!ctype_digit('' . $value)) {
                         $this->command->inputErrors[] = 'Arg value[' . $value . '] is not an integer.';
                     } else {
                         $converted_value = (int) $value;
