@@ -154,6 +154,9 @@ class CliConfig implements CliCommandInterface
      */
     protected function cmdGet()
     {
+        /**
+         * @see simplecomplex_config_cli()
+         */
         $container = Dependency::container();
         // Validate input. ---------------------------------------------
         $store = '';
@@ -234,24 +237,24 @@ class CliConfig implements CliCommandInterface
         // Do it.
         if ($all_keys) {
             if (!$config_store->has($section, '*')) {
+                $this->environment->echoMessage('');
                 $this->environment->echoMessage(
                     'Config store[' . $store . '] section[' . $section . '] doesn\'t exist.',
                     'notice'
                 );
                 exit;
-            } else {
-                $value = $config_store->get($section, '*');
             }
+            $value = $config_store->get($section, '*');
         } else {
             if (!$config_store->has($section, $key)) {
+                $this->environment->echoMessage('');
                 $this->environment->echoMessage(
                     'Config store[' . $store . '] section[' . $section . '] key[' . $key . '] doesn\'t exist.',
                     'notice'
                 );
                 exit;
-            } else {
-                $value = $config_store->get($section, $key);
             }
+            $value = $config_store->get($section, $key);
         }
         if (!$print && !$inspect) {
             return $value;
@@ -280,6 +283,9 @@ class CliConfig implements CliCommandInterface
      */
     protected function cmdSet() /*: void*/
     {
+        /**
+         * @see simplecomplex_config_cli()
+         */
         $container = Dependency::container();
         // Validate input. ---------------------------------------------
         $store = '';
@@ -431,6 +437,9 @@ class CliConfig implements CliCommandInterface
      */
     protected function cmdDelete() /*: void*/
     {
+        /**
+         * @see simplecomplex_config_cli()
+         */
         $container = Dependency::container();
         // Validate input. ---------------------------------------------
         $store = '';
@@ -532,6 +541,9 @@ class CliConfig implements CliCommandInterface
      */
     protected function cmdRefresh() /*: void*/
     {
+        /**
+         * @see simplecomplex_config_cli()
+         */
         $container = Dependency::container();
         // Validate input. ---------------------------------------------
         $store = '';
