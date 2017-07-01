@@ -134,6 +134,27 @@ class CliConfig implements CliCommandInterface
                 ],
                 [],
                 []
+            ),
+            new CliCommand(
+                $this,
+                static::COMMAND_PROVIDER_ALIAS . '-export',
+                'Export configuration from all .ini files in the base and override paths.'
+                . "\n" . 'Exporting from cache isn\'t possible because cache has no index;'
+                . ' doesn\'t know which sections and keys exist, unless asked specifically.',
+                [
+                    'store' => 'Config store name.',
+                    'target-file' => 'Path and filename; the path must exist already.'
+                        . "\n" . 'Relative is relative to document root.',
+                ],
+                [
+                    'format' => 'JSON; default, and the only format supported.',
+                    'unescaped' => 'Don\'t escape slash, tag, quotes, ampersand, unicode chars.',
+                    'pretty' => 'Pretty-print.',
+                ],
+                [
+                    'u' => 'unescaped',
+                    'p' => 'pretty',
+                ]
             )
         );
     }
@@ -273,7 +294,9 @@ class CliConfig implements CliCommandInterface
                 exit;
             }
         }
-        $this->environment->echoMessage(json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        $this->environment->echoMessage(
+            json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
+        );
         exit;
     }
 
@@ -609,6 +632,108 @@ class CliConfig implements CliCommandInterface
         exit;
     }
 
+    /**
+     * Ignores pre-confirmation --yes/-y option.
+     *
+     * @return void
+     *      Exits.
+     */
+    protected function cmdExport() /*: void*/
+    {
+        /**
+         * @see simplecomplex_config_cli()
+         */
+        $container = Dependency::container();
+        // Validate input. ---------------------------------------------
+        $store = '';
+        if (empty($this->command->arguments['store'])) {
+            $this->command->inputErrors[] = !isset($this->command->arguments['store']) ? 'Missing \'store\' argument.' :
+                'Empty \'store\' argument.';
+        } else {
+            $store = $this->command->arguments['store'];
+            if (!ConfigKey::validate($store)) {
+                $this->command->inputErrors[] = 'Invalid \'store\' argument.';
+            }
+        }
+        $target_file = '';
+        if (empty($this->command->arguments['target-file'])) {
+            $this->command->inputErrors[] = !isset($this->command->arguments['target-file']) ?
+                'Missing \'target-file\' argument.' : 'Empty \'target-file\' argument.';
+        } else {
+            $target_file = $this->command->arguments['target-file'];
+        }
+
+        $format = !empty($this->command->options['format']) ? $this->command->options['format'] : 'JSON';
+        $unescaped = !empty($this->command->options['unescaped']);
+        $pretty = !empty($this->command->options['pretty']);
+
+        // Pre-confirmation --yes/-y ignored for this command.
+        if ($this->command->preConfirmed) {
+            $this->command->inputErrors[] = 'Pre-confirmation \'yes\'/-y option not supported for this command.';
+        }
+        if ($this->command->inputErrors) {
+            foreach ($this->command->inputErrors as $msg) {
+                $this->environment->echoMessage(
+                    $this->environment->format($msg, 'hangingIndent'),
+                    'notice'
+                );
+            }
+            // This command's help text.
+            $this->environment->echoMessage("\n" . $this->command);
+            exit;
+        }
+        // Display command and the arg values used.---------------------
+        $this->environment->echoMessage(
+            $this->environment->format(
+                $this->environment->format($this->command->name, 'emphasize')
+                . "\n" . 'store: ' . $store
+                . "\n" . 'target-file: ' . $target_file
+                . (!$this->command->options ? '' : ("\n--" . join(' --', array_keys($this->command->options)))),
+                'hangingIndent'
+            )
+        );
+
+        // Request confirmation, ignore --yes/-y pre-confirmation option.
+        if (
+            !$this->environment->confirm(
+                'Export that config store - will overwrite the target file (if exists)?'
+                . "\n" . 'Type \'yes\' to continue:',
+                ['yes'],
+                '',
+                'Aborted exporting config store.'
+            )
+        ) {
+            exit;
+        }
+        // Check if the command is doable.------------------------------
+        // Nothing to check here.
+        if ($store == 'global' && $container->has('config')) {
+            /** @var IniSectionedConfig $config_store */
+            $config_store = $container->get('config');
+        } else {
+            $config_class = static::CLASS_CONFIG;
+            /** @var IniSectionedConfig $config_store */
+            $config_store = new $config_class($store);
+        }
+        // Do it.
+        if (!$config_store->export(
+            $target_file,
+            [
+                'format' => strtoupper($format),
+                'unescaped' => $unescaped,
+                'pretty' => $pretty,
+            ]
+        )) {
+            $this->environment->echoMessage('Failed to export config store[' . $store . '].', 'error');
+        } else {
+            $this->environment->echoMessage(
+                'Exported config store[' . $store . '] to target file[' . $target_file . '].',
+                'success'
+            );
+        }
+        exit;
+    }
+
 
     // CliCommandInterface.-----------------------------------------------------
 
@@ -647,6 +772,9 @@ class CliConfig implements CliCommandInterface
                 exit;
             case static::COMMAND_PROVIDER_ALIAS . '-refresh':
                 $this->cmdRefresh();
+                exit;
+            case static::COMMAND_PROVIDER_ALIAS . '-export':
+                $this->cmdExport();
                 exit;
             default:
                 throw new \LogicException(

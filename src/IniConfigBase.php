@@ -314,33 +314,29 @@ abstract class IniConfigBase extends Explorable
     }
 
     /**
-     * Flushes the cache store and loads fresh configuration from all .ini files
-     * in the base and override paths.
+     * Reads and parses all .ini files found in instance var paths.
      *
      * @see Utils::resolvePath()
      * @see Utils::PathFileList()
      * @see Utils::parseIniString()
-     * @see \Psr\SimpleCache\CacheInterface::setMultiple()
      *
-     * @return bool
-     *      False: no configuration variables found in .ini files of the paths.
+     * @param bool $allowNone
+     *      Falsy: throws ConfigurationException is no settings found at all.
+     *
+     * @return array
      *
      * @throws ConfigurationException
      *      A path doesn't exist or isn't directory.
-     *      No configuration item found at all.
      *      Using source sections, an .ini file doesn't declare a [section]
      *      before flat vars.
+     *      No configuration item found at all; unless truthy arg allowNone.
      * @throws \Throwable
      *      Propagated.
      */
-    public function refresh() : bool
+    public function readFromSources($allowNone = false) : array
     {
         $utils = Utils::getInstance();
 
-        // Clear cache first, as promised.
-        $this->cacheStore->clear();
-
-        // Load all variables from .ini file sources.
         $collection = [];
         $n_files = 0;
         foreach ($this->paths as $path_name => $path) {
@@ -426,7 +422,7 @@ abstract class IniConfigBase extends Explorable
                 }
             }
         }
-        if (!$collection) {
+        if (!$allowNone && !$collection) {
             if (!$n_files) {
                 throw new ConfigurationException(
                     'Found no configuration files at all.'
@@ -436,6 +432,31 @@ abstract class IniConfigBase extends Explorable
                 'Found no configuration item at all.'
             );
         }
+        return $collection;
+    }
+
+    /**
+     * Flushes the cache store and loads fresh configuration from all .ini files
+     * in the base and override paths.
+     *
+     * @see IniConfigBase::readFromSources()
+     * @see \Psr\SimpleCache\CacheInterface::setMultiple()
+     *
+     * @return bool
+     *      False: no configuration variables found in .ini files of the paths.
+     *
+     * @throws ConfigurationException
+     *      Propagated, see readFromSources().
+     * @throws \Throwable
+     *      Propagated, from cache store.
+     */
+    public function refresh() : bool
+    {
+        // Clear cache first, as promised.
+        $this->cacheStore->clear();
+
+        // Load all variables from .ini file sources.
+        $collection = $this->readFromSources();
 
         // Pass to cache.
         if ($collection) {
@@ -467,5 +488,102 @@ abstract class IniConfigBase extends Explorable
             return true;
         }
         return false;
+    }
+
+    /**
+     * Export from sources.
+     *
+     * Exporting from cache isn't possible because cache has no index;
+     * doesn't know which sections and keys exist, unless asked specifically.
+     *
+     * @see Utils::resolvePath()
+     *
+     * @param string $targetFile
+     *      Path and filename; the path must exist already.
+     *      Relative is relative to document root.
+     * @param array $options {
+     *      @var string $format
+     *          Default, and the only currently supported: JSON
+     *      @var bool $unescaped
+     *          (JSON) don't escape slash, tag, quotes, ampersand, unicode chars.
+     *      @var bool $pretty
+     *          (JSON) pretty-print.
+     * }
+     *
+     * @return bool
+     *      Creates/overwrites arg targetFile.
+     *
+     * @throws InvalidArgumentException
+     *      Arg targetFile empty, or path part doesn't exist/isn't a directory.
+     * @throws \TypeError
+     *      Arg options bucket invalid value type.
+     * @throws RuntimeException
+     *      Failure to encode as format.
+     *      Failure to write to file.
+     * @throws \Exception
+     *      Propagated, various kinds, from Utils::resolvePath().
+     */
+    public function export(string $targetFile, array $options = []) /*: void*/
+    {
+        $utils = Utils::getInstance();
+
+        if (!$targetFile) {
+            throw new InvalidArgumentException('Arg targetFile is empty.');
+        }
+        $target_file = basename($targetFile);
+        $target_path = $utils->resolvePath(
+            dirname($targetFile)
+        );
+        if (!file_exists($target_path)) {
+            throw new InvalidArgumentException(
+                'Arg targetFile path doesn\'t exist, targetFile[' . $targetFile . '], path[' . $target_path . '].');
+        }
+        if (!is_dir($target_path)) {
+            throw new InvalidArgumentException(
+                'Arg targetFile path is not a directory, targetFile[' . $targetFile . '], path[' . $target_path . '].');
+        }
+
+        $collection = $this->readFromSources();
+
+        if (!empty($options['format'])) {
+            if (!is_string($options['format'])) {
+                throw new \TypeError('Arg options bucket format must be string or empty.');
+            }
+            switch ($options['format']) {
+                case 'JSON':
+                case 'json':
+                    $format = 'JSON';
+                    break;
+                default:
+                    throw new InvalidArgumentException(
+                        'Arg options bucket format not supported, format[' . $options['format'] . '].'
+                    );
+            }
+        } else {
+            $format = 'JSON';
+        }
+        switch ($format) {
+            case 'JSON':
+                $unescaped = !empty($options['unescaped']);
+                $pretty = !empty($options['pretty']);
+                if (!$unescaped && !$pretty) {
+                    $flags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT;
+                } elseif (!$unescaped) {
+                    $flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
+                } else {
+                    $flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT;
+                }
+                $encoded = json_encode($collection, $flags);
+                break;
+            default:
+                throw new LogicException('Algo error, unsupported format[' . $options['format'] . '].');
+        }
+        if (!is_string($encoded)) {
+            throw new RuntimeException('Failed to encode as ' . $format . '.');
+        }
+        if (!@file_put_contents($target_path . '/' . $target_file, $encoded)) {
+            throw new RuntimeException('Failed to write to file[' . $target_path . '/' . $target_file . '].');
+        }
+        return true;
     }
 }
