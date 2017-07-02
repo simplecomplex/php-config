@@ -25,8 +25,12 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * Base class for configuration classes using .ini files as source,
  * and PSR-16 Simple Cache (+ ManageableCacheInterface) as store.
  *
+ * See example .ini file in: [package dir]/config-ini/example.ini.
+ *
  * @property-read string $name
  * @property-read bool $useSourceSections
+ * @property-read bool $escapeSourceKeys
+ * @property-read bool $parseTyped
  * @property-read string|null $sectionKeyDelimiter
  * @property-read array $paths
  *      Copy, to secure read-only status.
@@ -78,6 +82,16 @@ abstract class IniConfigBase extends Explorable
      * @var bool
      */
     protected $escapeSourceKeys = false;
+
+    /**
+     * Whether to type values null|true|false|N|N.N.
+     *
+     * Not exposed as constructor parameter because extending classes must
+     * define whether that property is fixed or variable.
+     *
+     * @var bool
+     */
+    protected $parseTyped = true;
 
     /**
      * Concat section and key inside setters and getters (with a delimiter),
@@ -136,6 +150,8 @@ abstract class IniConfigBase extends Explorable
     protected $explorableIndex = [
         'name',
         'useSourceSections',
+        'escapeSourceKeys',
+        'parseTyped',
         'sectionKeyDelimiter',
         'paths',
         'fileExtensions',
@@ -243,9 +259,11 @@ abstract class IniConfigBase extends Explorable
         $container = Dependency::container();
         // We need a cache store, no matter what.
         if ($container->has('cache-broker')) {
+            /** @var CacheBroker $cache_broker */
             $cache_broker = $container->get('cache-broker');
         } else {
             $cache_broker_class = static::CLASS_CACHE_BROKER;
+            /** @var CacheBroker $cache_broker */
             $cache_broker = new $cache_broker_class();
         }
         $this->cacheStore = $cache_broker->getStore('config_' . $name);
@@ -388,7 +406,7 @@ abstract class IniConfigBase extends Explorable
                                 if ($this->escapeSourceKeys) {
                                     $ini = $utils->escapeIniKeys($ini);
                                 }
-                                $settings_in_file = $utils->parseIniString($ini, true, true);
+                                $settings_in_file = $utils->parseIniString($ini, true, $this->parseTyped);
                                 if ($this->escapeSourceKeys) {
                                     $utils->unescapeIniKeys($settings_in_file, true);
                                 }
@@ -400,7 +418,7 @@ abstract class IniConfigBase extends Explorable
                         if ($this->escapeSourceKeys) {
                             $ini = $utils->escapeIniKeys($ini);
                         }
-                        $settings_in_file = $utils->parseIniString($ini, false, true);
+                        $settings_in_file = $utils->parseIniString($ini, false, $this->parseTyped);
                         if ($this->escapeSourceKeys) {
                             $utils->unescapeIniKeys($settings_in_file);
                         }

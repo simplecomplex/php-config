@@ -1,3 +1,9 @@
+SimpleComplex/Config 1.x, 2017-07-02
+------------------------------------
+- New control instance var parseTyped.
+- Added escapeSourceKeys and parseTyped to explorable instance vars.
+- Added example .ini file.
+
 SimpleComplex/Config 1.x, 2017-07-01
 ------------------------------------
 - .ini based export from sources, as JSON to file.
