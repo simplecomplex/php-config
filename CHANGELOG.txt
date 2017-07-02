@@ -3,6 +3,8 @@ SimpleComplex/Config 1.x, 2017-07-02
 - New control instance var parseTyped.
 - Added escapeSourceKeys and parseTyped to explorable instance vars.
 - Added example .ini file.
+- Ini based config support safe mode 'candidate' cache build;
+  spells far safer refresh().
 
 SimpleComplex/Config 1.x, 2017-07-01
 ------------------------------------

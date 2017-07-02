@@ -125,8 +125,8 @@ class CliConfig implements CliCommandInterface
             new CliCommand(
                 $this,
                 static::COMMAND_PROVIDER_ALIAS . '-refresh',
-                'Flushes the config store\'s cache store,'
-                . ' and loads fresh configuration from all .ini files in the base and override paths.'
+                'Refreshes the config store\'s cache store,'
+                . ' loading fresh configuration from all .ini files in the base and override paths.'
                 . "\n" . 'NB: All items that have been set, overwritten or deleted since last refresh'
                 . ' will be gone or restored to .ini-files\' original state.',
                 [
@@ -139,8 +139,8 @@ class CliConfig implements CliCommandInterface
                 $this,
                 static::COMMAND_PROVIDER_ALIAS . '-export',
                 'Export configuration from all .ini files in the base and override paths.'
-                . "\n" . 'Exporting from cache isn\'t possible because cache has no index;'
-                . ' doesn\'t know which sections and keys exist, unless asked specifically.',
+                . "\n" . 'Exporting from cache isn\'t possible because cache has no index.'
+                . ' Instead consider doing a backup.',
                 [
                     'store' => 'Config store name.',
                     'target-file' => 'Path and filename; the path must exist already.'

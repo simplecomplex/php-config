@@ -15,6 +15,7 @@ use SimpleComplex\Utils\Dependency;
 use SimpleComplex\Utils\PathFileList;
 use SimpleComplex\Cache\CacheBroker;
 use SimpleComplex\Cache\ManageableCacheInterface;
+use SimpleComplex\Cache\BackupCacheInterface;
 use SimpleComplex\Config\Exception\LogicException;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\OutOfBoundsException;
@@ -35,7 +36,8 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * @property-read array $paths
  *      Copy, to secure read-only status.
  * @property-read array $fileExtensions
- * @property-read ManageableCacheInterface $cacheStore
+ * @property-read ManageableCacheInterface|BackupCacheInterface $cacheStore
+ *      Is ManageableCacheInterface, may additionally be BackupCacheInterface.
  *
  * @see \Psr\SimpleCache\CacheInterface
  * @see ManageableCacheInterface
@@ -454,11 +456,20 @@ abstract class IniConfigBase extends Explorable
     }
 
     /**
-     * Flushes the cache store and loads fresh configuration from all .ini files
-     * in the base and override paths.
+     * Builds fresh configuration from all .ini files in the base and override
+     * paths (or any number of paths, if the concrete config class allows that).
+     *
+     * If current configuration isn't empty, and the internal cache store
+     * supports backup procedures, the fresh configuration will be built as a
+     * cache 'candidate' - and will only be used if successful (.ini parsing);
+     * safe mode, really.
+     * Otherwise current configuration cache will be cleared, before the new
+     * is build.
      *
      * @see IniConfigBase::readFromSources()
      * @see \Psr\SimpleCache\CacheInterface::setMultiple()
+     *
+     * @param bool
      *
      * @return bool
      *      False: no configuration variables found in .ini files of the paths.
@@ -470,11 +481,61 @@ abstract class IniConfigBase extends Explorable
      */
     public function refresh() : bool
     {
-        // Clear cache first, as promised.
-        $this->cacheStore->clear();
+        $empty = $this->cacheStore->isEmpty();
+
+        // Use (safe mode) cache 'candidate' procedure?
+        $build_cache_candidate = !$empty && $this->cacheStore instanceof BackupCacheInterface;
+
+        if (!$build_cache_candidate) {
+            $this->cacheStore->clear();
+        } else {
+            $this->cacheStore->setCandidate();
+        }
 
         // Load all variables from .ini file sources.
-        $collection = $this->readFromSources();
+        try {
+            $collection = $this->readFromSources();
+        } catch (\Throwable $xc) {
+            // Fail gracefully, if:
+            // + building via cache candidate (safe mode, sort of)
+            // + it's an ini parse error
+            // + there's a logger
+            if (
+                $build_cache_candidate
+                && $xc instanceof \SimpleComplex\Utils\Exception\ParseIniException
+            ) {
+                $container = Dependency::container();
+                if ($container->has('logger')) {
+                    /** @var \Psr\Log\LoggerInterface $logger */
+                    $logger = $container->get('logger');
+                    if ($container->has('inspector')) {
+                        /** @var \SimpleComplex\Inspect\Inspect $inspector */
+                        $inspector = $container->get('inspector');
+                        $logger->warning(
+                            '' . $inspector->trace($xc, [
+                                // Increase string truncation.
+                                'truncate' => 50000,
+                            ])
+                        );
+                    } else {
+                        $logger->warning($xc->getMessage(), [
+                            'exception' => $xc,
+                        ]);
+                    }
+                    // CLI mode: echo description of the situation.
+                    if (\SimpleComplex\Utils\CliEnvironment::cli()) {
+                        (new \SimpleComplex\Utils\CliEnvironment())->echoMessage(
+                            $xc->getMessage()
+                            . "\n" . 'Failed to build from sources, however existing cache prevails.'
+                            . ' The incident was logged.',
+                            'warning'
+                        );
+                    }
+                    return false;
+                }
+            }
+            throw $xc;
+        }
 
         // Pass to cache.
         if ($collection) {
@@ -495,7 +556,6 @@ abstract class IniConfigBase extends Explorable
                 }
                 $collection =& $concatted;
             }
-
             if (!$this->cacheStore->setMultiple($collection)) {
                 // Unlikely, but safer.
                 throw new RuntimeException(
@@ -503,6 +563,11 @@ abstract class IniConfigBase extends Explorable
                     . '] failed to set cache items loaded from .ini file(s).'
                 );
             }
+
+            if ($build_cache_candidate) {
+                $this->cacheStore->promoteCandidate('before-refresh_' . date('Y-m-d_His'));
+            }
+
             return true;
         }
         return false;
