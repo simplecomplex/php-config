@@ -574,10 +574,7 @@ abstract class IniConfigBase extends Explorable
     }
 
     /**
-     * Export from sources.
-     *
-     * Exporting from cache isn't possible because cache has no index;
-     * doesn't know which sections and keys exist, unless asked specifically.
+     * Export from cache or sources.
      *
      * @see Utils::resolvePath()
      *
@@ -585,6 +582,9 @@ abstract class IniConfigBase extends Explorable
      *      Path and filename; the path must exist already.
      *      Relative is relative to document root.
      * @param array $options {
+     *      @var boolean $fromSources
+     *          Falsy (default): export from cache.
+     *          Truthy: export from sources paths' ini files.
      *      @var string $format
      *          Default, and the only currently supported: JSON
      *      @var bool $unescaped
@@ -626,7 +626,21 @@ abstract class IniConfigBase extends Explorable
                 'Arg targetFile path is not a directory, targetFile[' . $targetFile . '], path[' . $target_path . '].');
         }
 
-        $collection = $this->readFromSources();
+        if (empty($options['fromSources'])) {
+            $collection = $this->cacheStore->export();
+            if ($this->sectionKeyDelimiter) {
+                $delim = $this->sectionKeyDelimiter;
+                $un_delimited = [];
+                foreach ($collection as $section_key => $value) {
+                    $sctn_ky = explode($delim, $section_key);
+                    $un_delimited[$sctn_ky[0]][$sctn_ky[1]] = $value;
+                }
+                $collection =& $un_delimited;
+            }
+        }
+        else {
+            $collection = $this->readFromSources();
+        }
 
         if (!empty($options['format'])) {
             if (!is_string($options['format'])) {
@@ -649,14 +663,12 @@ abstract class IniConfigBase extends Explorable
             case 'JSON':
                 $unescaped = !empty($options['unescaped']);
                 $pretty = !empty($options['pretty']);
-                if (!$unescaped && !$pretty) {
-                    $flags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT;
-                } elseif (!$unescaped) {
-                    $flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
-                } else {
-                    $flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT;
-                }
-                $encoded = json_encode($collection, $flags);
+                $encoded = json_encode(
+                    $collection,
+                    (!$unescaped ? JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT :
+                        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                    | (!$pretty ? 0 : JSON_PRETTY_PRINT)
+                );
                 break;
             default:
                 throw new LogicException('Algo error, unsupported format[' . $options['format'] . '].');

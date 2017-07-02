@@ -138,20 +138,20 @@ class CliConfig implements CliCommandInterface
             new CliCommand(
                 $this,
                 static::COMMAND_PROVIDER_ALIAS . '-export',
-                'Export configuration from all .ini files in the base and override paths.'
-                . "\n" . 'Exporting from cache isn\'t possible because cache has no index.'
-                . ' Instead consider doing a backup.',
+                'Export configuration from cache or from sources.',
                 [
                     'store' => 'Config store name.',
                     'target-file' => 'Path and filename; the path must exist already.'
                         . "\n" . 'Relative is relative to document root.',
                 ],
                 [
+                    'from-sources' => 'From source paths\' ini files; not cache.',
                     'format' => 'JSON; default, and the only format supported.',
                     'unescaped' => 'Don\'t escape slash, tag, quotes, ampersand, unicode chars.',
                     'pretty' => 'Pretty-print.',
                 ],
                 [
+                    's' => 'from-sources',
                     'u' => 'unescaped',
                     'p' => 'pretty',
                 ]
@@ -663,6 +663,7 @@ class CliConfig implements CliCommandInterface
             $target_file = $this->command->arguments['target-file'];
         }
 
+        $from_sources = !empty($this->command->options['from-sources']);
         $format = !empty($this->command->options['format']) ? $this->command->options['format'] : 'JSON';
         $unescaped = !empty($this->command->options['unescaped']);
         $pretty = !empty($this->command->options['pretty']);
@@ -696,7 +697,8 @@ class CliConfig implements CliCommandInterface
         // Request confirmation, ignore --yes/-y pre-confirmation option.
         if (
             !$this->environment->confirm(
-                'Export that config store - will overwrite the target file (if exists)?'
+                'Export that config store from ' . (!$from_sources ? 'cache' : 'sources')
+                . ' - will overwrite the target file (if exists)?'
                 . "\n" . 'Type \'yes\' to continue:',
                 ['yes'],
                 '',
@@ -719,6 +721,7 @@ class CliConfig implements CliCommandInterface
         if (!$config_store->export(
             $target_file,
             [
+                'fromSources' => $from_sources,
                 'format' => strtoupper($format),
                 'unescaped' => $unescaped,
                 'pretty' => $pretty,
@@ -727,7 +730,8 @@ class CliConfig implements CliCommandInterface
             $this->environment->echoMessage('Failed to export config store[' . $store . '].', 'error');
         } else {
             $this->environment->echoMessage(
-                'Exported config store[' . $store . '] to target file[' . $target_file . '].',
+                'Exported config store[' . $store . '] from ' . (!$from_sources ? 'cache' : 'sources')
+                . ' to target file[' . $target_file . '].',
                 'success'
             );
         }
