@@ -218,6 +218,8 @@ abstract class IniConfigBase extends Explorable
 
     // Business.----------------------------------------------------------------
 
+    // @todo: do not resolve arg paths, unless cache isNew() or isEmpty().
+
     /**
      * Create or load configuration store.
      *
