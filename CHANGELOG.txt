@@ -1,3 +1,8 @@
+SimpleComplex/Config 1.x, 2017-07-03
+------------------------------------
+- Ini-based constructor shan't establish source paths unless required;
+  that is: if the cache store is new and source ini files thus have to be read.
+
 SimpleComplex/Config 1.x, 2017-07-02
 ------------------------------------
 - New control instance var parseTyped.

@@ -106,7 +106,7 @@ abstract class IniConfigBase extends Explorable
      *
      * @see IniSectionedFlatConfig
      *
-     * @var string|null
+     * @var null|string
      */
     protected $sectionKeyDelimiter;
 
@@ -127,6 +127,19 @@ abstract class IniConfigBase extends Explorable
      * @var string[]
      */
     protected $paths = [];
+
+    /**
+     * Paths received as constructor arg paths;
+     * not resolved to absolute paths yet.
+     *
+     * Constructor sets it to array.
+     * definePaths() sets it to null.
+     *
+     * @see IniConfigBase::definePaths()
+     *
+     * @var array|null
+     */
+    protected $pathsPassed;
 
     /**
      * @var array
@@ -172,9 +185,15 @@ abstract class IniConfigBase extends Explorable
     {
         switch ($name) {
             case 'paths':
+                if (is_array($this->pathsPassed)) {
+                    $this->definePaths();
+                }
+                // Return copy to secure read-only status.
+                $v = $this->paths;
+                return $v;
             case 'fileExtensions':
                 // Return copy to secure read-only status.
-                $v = $this->{$name};
+                $v = $this->fileExtensions;
                 return $v;
             default:
                 if (in_array($name, $this->explorableIndex, true)) {
@@ -218,8 +237,6 @@ abstract class IniConfigBase extends Explorable
 
     // Business.----------------------------------------------------------------
 
-    // @todo: do not resolve arg paths, unless cache isNew() or isEmpty().
-
     /**
      * Create or load configuration store.
      *
@@ -229,6 +246,8 @@ abstract class IniConfigBase extends Explorable
      * Cache store name is 'config_[arg name]'.
      *
      * @uses CacheBroker::getStore()
+     *
+     * @see IniConfigBase::definePaths()
      *
      * @param string $name
      * @param string[] $paths
@@ -240,11 +259,10 @@ abstract class IniConfigBase extends Explorable
      *      A path bucket value isn't string.
      * @throws ConfigurationException
      *      CacheBroker returns cache store which isn't ManageableCacheInterface.
-     *      If no (arg paths * default paths) path is non-empty.
-     *      Propagated, if a path doesn't exist or isn't directory.
+     *      Propagated; if no path (arg paths * default paths) is non-empty.
      * @throws LogicException
-     *      Current (or parent) class declares a fixed set of path names
-     *      but doesn't declare equivalent PATH_DEFAULTS.
+     *      Propagated; current (or parent) class declares a fixed set of path
+     *      names but doesn't declare equivalent PATH_DEFAULTS.
      * @throws \Throwable
      *      Propagated.
      */
@@ -278,11 +296,51 @@ abstract class IniConfigBase extends Explorable
                 . (!is_object($this->cacheStore) ? gettype($this->cacheStore) : get_class($this->cacheStore)) . '].'
             );
         }
-        // Cache should live forever.
-        // And setter/getter arg ttl should be ignored (we don't pass it anyway).
-        // In effect: time-to-live should be ignored complete
-        $this->cacheStore->setTtlIgnore(true);
-        $this->cacheStore->setTtlDefault(ManageableCacheInterface::TTL_NONE);
+
+        // If newly created cache store: configure it.
+        $cache_store_new = $this->cacheStore->isNew();
+        if ($cache_store_new) {
+            // Configuration cache should live forever.
+            // And setter/getter arg ttl should be ignored (we don't pass it anyway).
+            // In effect: time-to-live should be ignored complete
+            $this->cacheStore->setTtlIgnore(true);
+            $this->cacheStore->setTtlDefault(ManageableCacheInterface::TTL_NONE);
+        }
+
+        // Memorize arg paths for later; to be settled on demand,
+        // by definePaths().
+        $this->pathsPassed = $paths;
+
+        // Don't import from .ini-files if our cache store has items.
+        if (!$cache_store_new && !$this->cacheStore->isEmpty()) {
+            return;
+        }
+
+        // Import from sources and write to cache.
+        $this->refresh();
+    }
+
+    /**
+     *
+     *
+     * @return void
+     *
+     * @throws \TypeError
+     *      A path bucket value isn't string.
+     * @throws ConfigurationException
+     *      If no path (constructor arg paths * default paths) is non-empty.
+     *      Propagated, if a path doesn't exist or isn't directory.
+     * @throws LogicException
+     *      Current (or parent) class declares a fixed set of path names
+     *      but doesn't declare equivalent PATH_DEFAULTS.
+     */
+    protected function definePaths() /*: void*/
+    {
+        // Already settled?
+        if ($this->pathsPassed === null) {
+            return;
+        }
+        $paths =& $this->pathsPassed;
 
         // Fixed or unlimited set of paths.
         if ($this->paths) {
@@ -298,7 +356,7 @@ abstract class IniConfigBase extends Explorable
         foreach ($path_names as $path_name) {
             if (!empty($paths[$path_name])) {
                 if (!is_string($paths[$path_name])) {
-                    throw new \TypeError('Arg array bucket paths[' . $path_name . '] type['
+                    throw new \TypeError('Construcor arg array bucket paths[' . $path_name . '] type['
                         . (!is_object($paths[$path_name]) ? gettype($paths[$path_name]) :
                             get_class($paths[$path_name])) . '] is not string.');
                 }
@@ -322,17 +380,13 @@ abstract class IniConfigBase extends Explorable
         if (!$n_non_empty_paths) {
             throw new ConfigurationException(
                 'At least one path must be non-empty, default paths[' . join(', ', static::PATH_DEFAULTS)
-                . '], arg paths[' . join(', ', $paths) . '].'
+                . '], construcor arg paths[' . join(', ', $paths) . '].'
             );
         }
 
-        // Don't import from .ini-files if our cache store has items.
-        if (!$this->cacheStore->isEmpty()) {
-            return;
-        }
-
-        // Do attempt to import.
-        $this->refresh();
+        // Flag that they are defined.
+        unset($paths);
+        $this->pathsPassed = null;
     }
 
     /**
@@ -355,8 +409,13 @@ abstract class IniConfigBase extends Explorable
      * @throws \Throwable
      *      Propagated.
      */
-    public function readFromSources($allowNone = false) : array
+    protected function readFromSources($allowNone = false) : array
     {
+        // Settle paths, unless already done.
+        if (is_array($this->pathsPassed)) {
+            $this->definePaths();
+        }
+
         $utils = Utils::getInstance();
 
         $collection = [];

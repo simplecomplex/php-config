@@ -35,9 +35,12 @@ use SimpleComplex\Config\Exception\RuntimeException;
  *
  * @property-read string $name
  * @property-read bool $useSourceSections
+ * @property-read bool $escapeSourceKeys
+ * @property-read bool $parseTyped
  * @property-read string $sectionKeyDelimiter
- * @property-read string $pathBase
- * @property-read string $pathOverride
+ * @property-read array $paths
+ *      Copy, to secure read-only status.
+ * @property-read array $fileExtensions
  * @property-read \SimpleComplex\Cache\ManageableCacheInterface $cacheStore
  *
  * @package SimpleComplex\Config
