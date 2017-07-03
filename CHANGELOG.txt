@@ -2,6 +2,8 @@ SimpleComplex/Config 1.x, 2017-07-03
 ------------------------------------
 - Ini-based constructor shan't establish source paths unless required;
   that is: if the cache store is new and source ini files thus have to be read.
+- Ini-based use CacheBroker persistent cache class instead of setting ttl
+  default and ignore on cache store instance.
 
 SimpleComplex/Config 1.x, 2017-07-02
 ------------------------------------

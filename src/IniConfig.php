@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
-use SimpleComplex\Cache\CacheBroker;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\RuntimeException;
 
@@ -241,9 +240,6 @@ class IniConfig extends IniConfigBase implements ConfigInterface
      * the same arguments; an instance is basically a wrapped cache store.
      *
      * Defaults to ignore [section]s in .ini files.
-     *
-     * @uses CacheBroker::getStore()
-     * @see IniConfigBase::refresh()
      *
      * @param string $name
      * @param array $paths {

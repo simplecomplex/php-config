@@ -288,7 +288,8 @@ abstract class IniConfigBase extends Explorable
             /** @var CacheBroker $cache_broker */
             $cache_broker = new $cache_broker_class();
         }
-        $this->cacheStore = $cache_broker->getStore('config_' . $name);
+        // Use a persistent (time-to-live forever + ignore arg ttl) cache class.
+        $this->cacheStore = $cache_broker->getStore('config_' . $name, CacheBroker::CACHE_PERSISTENT);
         // The cache store must implement ManageableCacheInterface.
         if (!($this->cacheStore instanceof ManageableCacheInterface)) {
             throw new ConfigurationException(
@@ -297,22 +298,13 @@ abstract class IniConfigBase extends Explorable
             );
         }
 
-        // If newly created cache store: configure it.
-        $cache_store_new = $this->cacheStore->isNew();
-        if ($cache_store_new) {
-            // Configuration cache should live forever.
-            // And setter/getter arg ttl should be ignored (we don't pass it anyway).
-            // In effect: time-to-live should be ignored complete
-            $this->cacheStore->setTtlIgnore(true);
-            $this->cacheStore->setTtlDefault(ManageableCacheInterface::TTL_NONE);
-        }
-
         // Memorize arg paths for later; to be settled on demand,
         // by definePaths().
         $this->pathsPassed = $paths;
 
-        // Don't import from .ini-files if our cache store has items.
-        if (!$cache_store_new && !$this->cacheStore->isEmpty()) {
+        // Don't import from .ini-files if our cache store
+        // is regenerated and has items.
+        if (!$this->cacheStore->isNew() && !$this->cacheStore->isEmpty()) {
             return;
         }
 
