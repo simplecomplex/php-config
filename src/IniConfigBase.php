@@ -244,8 +244,10 @@ abstract class IniConfigBase extends Explorable
      * the same arguments; an instance is basically a wrapped cache store.
      *
      * Cache store name is 'config_[arg name]'.
+     * Cache store type is 'persistent'; no end of life.
      *
      * @uses CacheBroker::getStore()
+     * @uses CacheBroker::CACHE_PERSISTENT
      *
      * @see IniConfigBase::definePaths()
      *
@@ -376,7 +378,7 @@ abstract class IniConfigBase extends Explorable
             );
         }
 
-        // Flag that they are defined.
+        // Flag that paths now are defined.
         unset($paths);
         $this->pathsPassed = null;
     }
