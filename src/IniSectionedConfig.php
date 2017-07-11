@@ -352,8 +352,9 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
     /**
      * Paths to where configuration .ini-files reside.
      *
-     * Base configuration should work in dev/test environments.
-     * Overriding configuration should consist of productions settings.
+     * Base configuration should work in any (or no) environment.
+     * Override configuration should consist of overriding/completing
+     * production _or_ dev/test settings.
      *
      * Relative path is relative to document root.
      *
@@ -361,7 +362,7 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      */
     const PATH_DEFAULTS = [
         'base' => '../conf/ini/base',
-        'override' => '../conf/ini/operations',
+        'override' => '../conf/ini/override',
     ];
 
     /**

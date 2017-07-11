@@ -203,8 +203,9 @@ class IniConfig extends IniConfigBase implements ConfigInterface
     /**
      * Paths to where configuration .ini-files reside.
      *
-     * Base configuration should work in dev/test environments.
-     * Overriding configuration should consist of productions settings.
+     * Base configuration should work in any (or no) environment.
+     * Override configuration should consist of overriding/completing
+     * production _or_ dev/test settings.
      *
      * Relative path is relative to document root.
      *
@@ -212,7 +213,7 @@ class IniConfig extends IniConfigBase implements ConfigInterface
      */
     const PATH_DEFAULTS = [
         'base' => '../conf/ini-flat/base',
-        'override' => '../conf/ini-flat/operations',
+        'override' => '../conf/ini-flat/override',
     ];
 
     /**

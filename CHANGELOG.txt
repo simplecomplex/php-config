@@ -1,3 +1,8 @@
+SimpleComplex/Config 1.x, 2017-07-11
+------------------------------------
+- Renamed override configuration dirs (from 'operations'), and clarified
+  documentation.
+
 SimpleComplex/Config 1.x, 2017-07-03
 ------------------------------------
 - Ini-based constructor shan't establish source paths unless required;
