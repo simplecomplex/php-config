@@ -53,7 +53,9 @@ That allows one to clone and use ini-files from multiple version control reposit
 Yep, but they are less error-prone than JSON, YAML, what-not.  
 The syntax is so simple it's hard to make mistakes. And operations people are used to ini-files.
 
-##### ``` IniConfig ``` #####  
+The cache layer is [SimpleComplex Cache](https://github.com/simplecomplex/php-cache) **``` PersistentFileCache ```**. 
+
+**``` IniConfig ```**  
 is not sectioned. Simple but probably not that useful.
 
 **``` IniSectionedConfig ```**  
@@ -64,4 +66,38 @@ Keep development/production invariant variables (ini-files) in the _base_ path.
 Let operations keep production variables in the _override_ path.
 
 Using the list-principle - and fully supporting ``` remember() ``` and ``` forget() ``` -
-``` IniSectionedConfig ```is optimal for accessing many/all keys of a section within a limited procedure.
+``` IniSectionedConfig ``` is optimal for accessing many/all keys of a section within a limited procedure.
+
+**``` IniSectionedFlatConfig ```**  
+a sectioned implementation, using concatenation.
+
+Optimal for types of configuration one expects to access keys of diverse sections in an unpredictable manner,
+but still want the organisational benefit of sections; many but exact cache reads.  
+[SimpleComplex Locale](https://github.com/simplecomplex/php-locale) uses this config class for localized texts.
+
+### Abstraction ###
+
+The **``` Config ```** class is an abstraction of sectioned configuration.
+
+In this package it extends ``` IniSectionedConfig ```.  
+In an extending package it could  be some other sectioned config implementation.
+
+### CLI interface ###
+
+**``` CliConfig ```**  delivers CLI commands for setting, getting and deleting config items.  
+And commands for refreshing and exporting full configuration stores.
+
+It exposes ``` IniSectionedConfig ``` instances, via the ``` Config ``` class.  
+The other config classes are not accessible via CLI.
+
+### Global config ###
+
+``` Config ``` defaults to deliver an instance named 'global'.
+
+A typical system could probably benefit from a single config instance for the bulk of items.  
+Since the whole thing _runtime_ is cache based, there's no performance reason for using multiple instances.
+
+#### Dependency injection container ID: config ####
+
+Recommendation: access (and thus instantiate) the global config via DI container ID 'config'.  
+See [SimpleComplex Utils](https://github.com/simplecomplex/php-utils) ``` Dependency ```.

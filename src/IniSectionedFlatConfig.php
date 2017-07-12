@@ -21,7 +21,7 @@ use SimpleComplex\Config\Exception\RuntimeException;
  *
  * Best for contexts where
  * -----------------------
- * one expects to access keys of diverse sections in a chaotic manner,
+ * one expects to access keys of diverse sections in an unpredictable manner,
  * but still want the organisational benefit of sections; many but exact
  * cache reads.
  *
