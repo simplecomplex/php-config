@@ -1,7 +1,7 @@
 {
     "name": "simplecomplex/config",
     "type": "library",
-    "description": "Configuration exposed as PSR-16 Simple Cache implementation.",
+    "description": "Simple Cache like configuration interfaces; ini-files as source, cache as store.",
     "keywords": ["configuration", "PSR-16", "simple cache", "PHP"],
     "homepage": "https://github.com/simplecomplex/php-config",
     "license": "MIT",

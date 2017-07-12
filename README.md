@@ -1,15 +1,5 @@
 ## Config ##
 
-#### Requirements ####
-
-- PHP >=7.0
-- [SimpleComplex Cache](https://github.com/simplecomplex/php-cache)
-- [SimpleComplex Utils](https://github.com/simplecomplex/php-utils)
-
-##### Suggestions #####
-
-- [SimpleComplex Inspect](https://github.com/simplecomplex/inspect) (for CLI)
-
 ### Simple and sectioned configuration interfaces ###
 
 **``` ConfigInterface ```**  
@@ -101,3 +91,13 @@ Since the whole thing _runtime_ is cache based, there's no performance reason fo
 
 Recommendation: access (and thus instantiate) the global config via DI container ID 'config'.  
 See [SimpleComplex Utils](https://github.com/simplecomplex/php-utils) ``` Dependency ```.
+
+### Requirements ###
+
+- PHP >=7.0
+- [SimpleComplex Cache](https://github.com/simplecomplex/php-cache)
+- [SimpleComplex Utils](https://github.com/simplecomplex/php-utils)
+
+##### Suggestions #####
+
+- [SimpleComplex Inspect](https://github.com/simplecomplex/inspect) (for CLI)
