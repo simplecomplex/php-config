@@ -33,7 +33,7 @@ a sectioned implementation, using concatenation.
 
 #### Ini-files as source, cache as store ####
 
-The ini-file based classes parses ini-files, and saves to cache stores.
+The ini-file based classes parse ini-files, and save to cache stores.
 
 They read recursively from their ini-file paths.
 That allows one to clone and use ini-files from multiple version control repositories.
