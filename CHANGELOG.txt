@@ -1,3 +1,9 @@
+SimpleComplex/Config 1.x, 2017-08-04
+------------------------------------
+- .ini files within same path append to eachother, whereas later path(s)
+  override previous (base) path(s); the use of array_merge_recursive()
+  and array_replace_recursive() is deliberate and not a mistake.
+
 SimpleComplex/Config 1.x, 2017-07-20
 ------------------------------------
 - Cli script find vendor dir fix.
