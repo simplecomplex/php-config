@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
+use SimpleComplex\Utils\Utils;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\RuntimeException;
 
@@ -208,9 +209,7 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
     public function getMultiple(string $section, $keys, $default = null) : array
     {
         if (!is_array($keys) && !is_object($keys)) {
-            throw new \TypeError(
-                'Arg keys type[' . (!is_object($keys) ? gettype($keys) : get_class($keys)) . '] is not array|object.'
-            );
+            throw new \TypeError('Arg keys type[' . Utils::getType($keys) . '] is not array|object.');
         }
 
         $arr = $this->memory[$section] ?? $this->cacheStore->get($section);
@@ -251,10 +250,7 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
             );
         }
         if (!is_array($values) && !is_object($values)) {
-            throw new \TypeError(
-                'Arg values type[' . (!is_object($values) ? gettype($values) : get_class($values))
-                . '] is not array|object.'
-            );
+            throw new \TypeError('Arg values type[' . Utils::getType($values) . '] is not array|object.');
         }
 
         /**

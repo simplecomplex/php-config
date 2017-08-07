@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
+use SimpleComplex\Utils\Utils;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\OutOfBoundsException;
 use SimpleComplex\Config\Exception\RuntimeException;
@@ -113,9 +114,7 @@ class EnvConfig implements ConfigInterface
     public function getMultiple($keys, $default = null) : array
     {
         if (!is_array($keys) && !is_object($keys)) {
-            throw new \TypeError(
-                'Arg keys type[' . (!is_object($keys) ? gettype($keys) : get_class($keys)) . '] is not array|object.'
-            );
+            throw new \TypeError('Arg keys type[' . Utils::getType($keys) . '] is not array|object.');
         }
         $values = [];
         foreach ($keys as $k) {

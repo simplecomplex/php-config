@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
+use SimpleComplex\Utils\Utils;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\RuntimeException;
 
@@ -135,9 +136,7 @@ class IniConfig extends IniConfigBase implements ConfigInterface
     public function getMultiple($keys, $default = null) : array
     {
         if (!is_array($keys) && !is_object($keys)) {
-            throw new \TypeError(
-                'Arg keys type[' . (!is_object($keys) ? gettype($keys) : get_class($keys)) . '] is not array|object.'
-            );
+            throw new \TypeError('Arg keys type[' . Utils::getType($keys) . '] is not array|object.');
         }
         return $this->cacheStore->getMultiple($keys, $default);
     }
@@ -162,10 +161,7 @@ class IniConfig extends IniConfigBase implements ConfigInterface
     public function setMultiple($values) : bool
     {
         if (!is_array($values) && !is_object($values)) {
-            throw new \TypeError(
-                'Arg values type[' . (!is_object($values) ? gettype($values) : get_class($values))
-                . '] is not array|object.'
-            );
+            throw new \TypeError('Arg values type[' . Utils::getType($values) . '] is not array|object.');
         }
         foreach ($values as $key => $value) {
             if (!ConfigKey::validate($key)) {

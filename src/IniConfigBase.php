@@ -296,7 +296,7 @@ abstract class IniConfigBase extends Explorable
         if (!($this->cacheStore instanceof ManageableCacheInterface)) {
             throw new ConfigurationException(
                 'Cache store must implement ManageableCacheInterface, saw type['
-                . (!is_object($this->cacheStore) ? gettype($this->cacheStore) : get_class($this->cacheStore)) . '].'
+                . Utils::getType($this->cacheStore) . '].'
             );
         }
 
@@ -350,9 +350,10 @@ abstract class IniConfigBase extends Explorable
         foreach ($path_names as $path_name) {
             if (!empty($paths[$path_name])) {
                 if (!is_string($paths[$path_name])) {
-                    throw new \TypeError('Construcor arg array bucket paths[' . $path_name . '] type['
-                        . (!is_object($paths[$path_name]) ? gettype($paths[$path_name]) :
-                            get_class($paths[$path_name])) . '] is not string.');
+                    throw new \TypeError(
+                        'Construcor arg array bucket paths[' . $path_name . '] type['
+                        . Utils::getType($paths[$path_name]) . '] is not string.'
+                    );
                 }
                 $this->paths{$path_name} = $paths[$path_name];
                 if ($paths[$path_name]) {
@@ -362,7 +363,7 @@ abstract class IniConfigBase extends Explorable
                 if (!isset(static::PATH_DEFAULTS[$path_name])) {
                     throw new LogicException(
                         'Cache store must implement ManageableCacheInterface, saw type['
-                        . (!is_object($this->cacheStore) ? gettype($this->cacheStore) : get_class($this->cacheStore)) . '].'
+                        . Utils::getType($this->cacheStore) . '].'
                     );
                 }
                 $this->paths{$path_name} = static::PATH_DEFAULTS[$path_name];

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
+use SimpleComplex\Utils\Utils;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\OutOfBoundsException;
 use SimpleComplex\Config\Exception\RuntimeException;
@@ -226,11 +227,7 @@ class SectionedWrapper implements SectionedConfigInterface
         if ($sectionKeyDelimiter !== null) {
             if (!is_string($sectionKeyDelimiter)) {
                 throw new \TypeError(
-                    'Arg sectionKeyDelimiter type['
-                    . (!is_object($sectionKeyDelimiter) ? gettype($sectionKeyDelimiter) :
-                        get_class($sectionKeyDelimiter)
-                    )
-                    . '] is string or null.'
+                    'Arg sectionKeyDelimiter type[' . Utils::getType($sectionKeyDelimiter) . '] is not string or null.'
                 );
             }
             if (!ConfigKey::validate($sectionKeyDelimiter)) {
