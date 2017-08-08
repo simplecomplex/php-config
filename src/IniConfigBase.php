@@ -19,7 +19,7 @@ use SimpleComplex\Cache\BackupCacheInterface;
 use SimpleComplex\Config\Exception\LogicException;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\OutOfBoundsException;
-use SimpleComplex\Config\Exception\ConfigurationException;
+use SimpleComplex\Config\Exception\ConfigException;
 use SimpleComplex\Config\Exception\RuntimeException;
 
 /**
@@ -259,7 +259,7 @@ abstract class IniConfigBase extends Explorable
      *      Invalid arg $name.
      * @throws \TypeError
      *      A path bucket value isn't string.
-     * @throws ConfigurationException
+     * @throws ConfigException
      *      CacheBroker returns cache store which isn't ManageableCacheInterface.
      *      Propagated; if no path (arg paths * default paths) is non-empty.
      * @throws LogicException
@@ -294,7 +294,7 @@ abstract class IniConfigBase extends Explorable
         $this->cacheStore = $cache_broker->getStore('config_' . $name, CacheBroker::CACHE_PERSISTENT);
         // The cache store must implement ManageableCacheInterface.
         if (!($this->cacheStore instanceof ManageableCacheInterface)) {
-            throw new ConfigurationException(
+            throw new ConfigException(
                 'Cache store must implement ManageableCacheInterface, saw type['
                 . Utils::getType($this->cacheStore) . '].'
             );
@@ -321,7 +321,7 @@ abstract class IniConfigBase extends Explorable
      *
      * @throws \TypeError
      *      A path bucket value isn't string.
-     * @throws ConfigurationException
+     * @throws ConfigException
      *      If no path (constructor arg paths * default paths) is non-empty.
      *      Propagated, if a path doesn't exist or isn't directory.
      * @throws LogicException
@@ -373,7 +373,7 @@ abstract class IniConfigBase extends Explorable
             }
         }
         if (!$n_non_empty_paths) {
-            throw new ConfigurationException(
+            throw new ConfigException(
                 'At least one path must be non-empty, default paths[' . join(', ', static::PATH_DEFAULTS)
                 . '], construcor arg paths[' . join(', ', $paths) . '].'
             );
@@ -392,11 +392,11 @@ abstract class IniConfigBase extends Explorable
      * @see Utils::parseIniString()
      *
      * @param bool $allowNone
-     *      Falsy: throws ConfigurationException is no settings found at all.
+     *      Falsy: throws ConfigException is no settings found at all.
      *
      * @return array
      *
-     * @throws ConfigurationException
+     * @throws ConfigException
      *      A path doesn't exist or isn't directory.
      *      Using source sections, an .ini file doesn't declare a [section]
      *      before flat vars.
@@ -422,13 +422,13 @@ abstract class IniConfigBase extends Explorable
             // Convert path to absolute if required, and check that it exists.
             $absolute_path = $utils->resolvePath($path);
             if (!file_exists($absolute_path)) {
-                throw new ConfigurationException(
+                throw new ConfigException(
                     'The ' . (!ctype_digit('' . $path_name) ? ('\'' . $path_name . '\'') : ('index[' . $path_name . ']'))
                     . ' path doesn\'t exist, path[' . $absolute_path . ']'
                 );
             }
             if (!is_dir($absolute_path)) {
-                throw new ConfigurationException(
+                throw new ConfigException(
                     'The ' . (!ctype_digit('' . $path_name) ? ('\'' . $path_name . '\'') : ('index[' . $path_name . ']'))
                     . ' path is not a directory, path[' . $absolute_path . ']'
                 );
@@ -456,7 +456,7 @@ abstract class IniConfigBase extends Explorable
                             );
                             if (trim($ini)) {
                                 if (!preg_match('/^\[/', $ini)) {
-                                    throw new ConfigurationException(
+                                    throw new ConfigException(
                                         'Using source sections, an .ini file must declare a [section] before flat vars,'
                                         . 'file[' . $path_file . '].'
                                     );
@@ -504,11 +504,11 @@ abstract class IniConfigBase extends Explorable
         }
         if (!$allowNone && !$collection) {
             if (!$n_files) {
-                throw new ConfigurationException(
+                throw new ConfigException(
                     'Found no configuration files at all.'
                 );
             }
-            throw new ConfigurationException(
+            throw new ConfigException(
                 'Found no configuration item at all.'
             );
         }
@@ -534,7 +534,7 @@ abstract class IniConfigBase extends Explorable
      * @return bool
      *      False: no configuration variables found in .ini files of the paths.
      *
-     * @throws ConfigurationException
+     * @throws ConfigException
      *      Propagated, see readFromSources().
      * @throws \Throwable
      *      Propagated, from cache store.
@@ -607,7 +607,7 @@ abstract class IniConfigBase extends Explorable
                         $concat_key = $section . $this->sectionKeyDelimiter . $key;
                         // Check that the final key isn't too long.
                         if (!ConfigKey::validate($concat_key)) {
-                            throw new ConfigurationException(
+                            throw new ConfigException(
                                 'Concatted section+delimiter+key key is not valid, concatted[' . $concat_key . '].'
                             );
                         }

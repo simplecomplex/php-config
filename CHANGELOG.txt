@@ -1,3 +1,8 @@
+SimpleComplex/Config 1.x, 2017-08-08
+------------------------------------
+- Renamed ConfigException (from ConfigurationException) to stress that it should
+  only be used within this package.
+
 SimpleComplex/Config 1.x, 2017-08-04
 ------------------------------------
 - .ini files within same path append to eachother, whereas later path(s)
