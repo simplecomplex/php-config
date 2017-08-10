@@ -1,3 +1,8 @@
+SimpleComplex/Config 1.x, 2017-08-10
+------------------------------------
+- Clarified a EnvConfig and EnvSectionedConfig's getInstance() methods;
+  which btw only makes sense because these two classes are singleton'ish.
+
 SimpleComplex/Config 1.x, 2017-08-08
 ------------------------------------
 - Renamed ConfigException (from ConfigurationException) to stress that it should

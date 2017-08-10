@@ -12,6 +12,8 @@ namespace SimpleComplex\Config;
 /**
  * Wrapped environment variable configuration object.
  *
+ * Use as singleton - there's only a single set of environment variables.
+ *
  * Weird but effective pattern. See SectionedWrapper for methods.
  *
  * @see SectionedWrapper
@@ -31,30 +33,32 @@ class EnvSectionedConfig extends SectionedWrapper
     protected static $instance;
 
     /**
+     * Makes sense because singleton'ish.
+     *
      * First object instantiated via this method, disregarding class called on.
      *
-     * @param mixed ...$constructorParams
+     * SectionedWrapper cannot have getInstance() method (wouldn't make sense)
+     * so ...$constructorParams parameter(s) are not needed for method signature
+     * compatibility.
      *
      * @return EnvSectionedConfig
      *      static, really, but IDE might not resolve that.
      */
-    public static function getInstance(...$constructorParams)
+    public static function getInstance()
     {
-        // Unsure about null ternary ?? for class and instance vars.
-        if (!static::$instance) {
-            static::$instance = new static(...$constructorParams);
-        }
-        return static::$instance;
+        return static::$instance ?? (static::$instance = new static());
     }
 
 
     // SectionedWrapper.--------------------------------------------------------
 
     /**
-     * @param string $name
+     * Passes EnvConfig default instance to SectionedWrapper constructor.
+     *
+     * @see EnvConfig::getInstance()
      */
-    public function __construct($name = 'environment')
+    public function __construct()
     {
-        parent::__construct(EnvConfig::getInstance($name), '__');
+        parent::__construct(EnvConfig::getInstance(), '__');
     }
 }

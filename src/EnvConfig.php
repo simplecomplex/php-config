@@ -17,6 +17,10 @@ use SimpleComplex\Config\Exception\RuntimeException;
 /**
  * Configuration using environment variables as source, and no caching.
  *
+ * Use as singleton - there's only a single set of environment variables.
+ *
+ * @property-read string $name
+ *
  * @package SimpleComplex\Config
  */
 class EnvConfig implements ConfigInterface
@@ -30,6 +34,8 @@ class EnvConfig implements ConfigInterface
     protected static $instance;
 
     /**
+     * Makes sense because singleton'ish.
+     *
      * First object instantiated via this method, disregarding class called on.
      *
      * @param mixed ...$constructorParams
@@ -39,11 +45,7 @@ class EnvConfig implements ConfigInterface
      */
     public static function getInstance(...$constructorParams)
     {
-        // Unsure about null ternary ?? for class and instance vars.
-        if (!static::$instance) {
-            static::$instance = new static(...$constructorParams);
-        }
-        return static::$instance;
+        return static::$instance ?? (static::$instance = new static(...$constructorParams));
     }
 
 
@@ -199,7 +201,7 @@ class EnvConfig implements ConfigInterface
      * @throws InvalidArgumentException
      *      Invalid arg name.
      */
-    public function __construct(string $name)
+    public function __construct(string $name = 'environment-flat')
     {
         if (!ConfigKey::validate($name)) {
             throw new InvalidArgumentException('Arg name is not valid, name[' . $name . '].');
