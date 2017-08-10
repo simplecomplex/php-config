@@ -201,7 +201,7 @@ class EnvConfig implements ConfigInterface
      * @throws InvalidArgumentException
      *      Invalid arg name.
      */
-    public function __construct(string $name = 'environment-flat')
+    public function __construct(string $name = 'environment')
     {
         if (!ConfigKey::validate($name)) {
             throw new InvalidArgumentException('Arg name is not valid, name[' . $name . '].');
