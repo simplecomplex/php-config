@@ -725,8 +725,8 @@ abstract class IniConfigBase extends Explorable
                 $pretty = !empty($options['pretty']);
                 $encoded = json_encode(
                     $collection,
-                    (!$unescaped ? JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT :
-                        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                    (!$unescaped ? (JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) :
+                        (JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
                     | (!$pretty ? 0 : JSON_PRETTY_PRINT)
                 );
                 break;
