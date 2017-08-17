@@ -701,6 +701,7 @@ abstract class IniConfigBase extends Explorable
         else {
             $collection = $this->readFromSources();
         }
+        ksort($collection);
 
         if (!empty($options['format'])) {
             if (!is_string($options['format'])) {
