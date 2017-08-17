@@ -568,11 +568,11 @@ abstract class IniConfigBase extends Explorable
                 if ($container->has('logger')) {
                     /** @var \Psr\Log\LoggerInterface $logger */
                     $logger = $container->get('logger');
-                    if ($container->has('inspector')) {
-                        /** @var \SimpleComplex\Inspect\Inspect $inspector */
-                        $inspector = $container->get('inspector');
+                    if ($container->has('inspect')) {
+                        /** @var \SimpleComplex\Inspect\Inspect $inspect */
+                        $inspect = $container->get('inspect');
                         $logger->warning(
-                            '' . $inspector->trace($xc, [
+                            '' . $inspect->trace($xc, [
                                 // Increase string truncation.
                                 'truncate' => 50000,
                             ])
