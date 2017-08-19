@@ -1,3 +1,9 @@
+SimpleComplex/Config 1.x, 2017-08-19
+------------------------------------
+- IniSectionedConfig shan't delete the whole section upon just because the key
+  to be deleted is the last in the array.
+  And it shan't do anything at all if the key doesn't exist.
+
 SimpleComplex/Config 1.x, 2017-08-17
 ------------------------------------
 - Export ini file based configuration: sort by section.

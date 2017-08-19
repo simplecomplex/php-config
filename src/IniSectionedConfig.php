@@ -173,16 +173,9 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
 
         $arr = $this->cacheStore->get($section);
         // ~ If array; checking for array type should nornally be redundant.
-        if ($arr !== null) {
+        if ($arr !== null && array_key_exists($key, $arr)) {
             unset($arr[$key]);
-            if (!$arr) {
-                if (!$this->cacheStore->delete($section)) {
-                    throw new RuntimeException(
-                        'Underlying cache store type[' . get_class($this->cacheStore)
-                        . '] failed to delete section[' . $section . '].'
-                    );
-                }
-            } elseif (!$this->cacheStore->set($section, $arr)) {
+            if (!$this->cacheStore->set($section, $arr)) {
                 throw new RuntimeException(
                     'Underlying cache store type[' . get_class($this->cacheStore)
                     . '] failed to set (save) section[' . $section . '].'
