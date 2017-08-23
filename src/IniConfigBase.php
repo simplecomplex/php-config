@@ -142,14 +142,12 @@ abstract class IniConfigBase extends Explorable
     protected $pathsPassed;
 
     /**
-     * @var array
-     */
-    const FILE_EXTENSTIONS = [
-        'ini',
-    ];
-
-    /**
-     * @var array
+     * Defaults to use only one extension: [config store name].ini.
+     *
+     * The [config store name] part (no brackets, nb) allow configuration
+     * files of different stores to 'live' in the same paths.
+     *
+     * @var string[]
      */
     protected $fileExtensions;
 
@@ -277,7 +275,11 @@ abstract class IniConfigBase extends Explorable
 
         // Allow extending class constructor to define file extensions.
         if (!$this->fileExtensions) {
-            $this->fileExtensions = static::FILE_EXTENSTIONS;
+            // The [config store name] part allow configuration files
+            // of different stores to 'live' in the same paths.
+            $this->fileExtensions = [
+                $name . '.ini',
+            ];
         }
 
         $container = Dependency::container();
@@ -505,7 +507,8 @@ abstract class IniConfigBase extends Explorable
         if (!$allowNone && !$collection) {
             if (!$n_files) {
                 throw new ConfigException(
-                    'Found no configuration files at all.'
+                    'Found no configuration files at all, looking for extensions[' . join(', ', $this->fileExtensions)
+                    . '] in paths[' . join(', ', $this->paths) . '].'
                 );
             }
             throw new ConfigException(

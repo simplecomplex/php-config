@@ -1,3 +1,9 @@
+SimpleComplex/Config 1.x, 2017-08-23
+------------------------------------
+- Important: ini based configuration must use (look for)
+  .[config store name].ini files; not simply .ini files.
+- Class constant IniConfigBase::FILE_EXTENSTIONS no longer exists.
+
 SimpleComplex/Config 1.x, 2017-08-19
 ------------------------------------
 - IniSectionedConfig shan't delete the whole section upon just because the key
