@@ -77,12 +77,12 @@ class CliConfig implements CliCommandInterface
                 ],
                 [
                     'all' => 'Get the whole section.',
-                    'print' => 'Print to console, don\'t return value.',
+                    'get' => 'Return value, don\'t print it.',
                     'inspect' => 'Print Inspect\'ed value instead of JSON-encoded.',
                 ],
                 [
                     'a' => 'all',
-                    'p' => 'print',
+                    'g' => 'get',
                     'i' => 'inspect',
                 ]
             ),
@@ -171,7 +171,7 @@ class CliConfig implements CliCommandInterface
 
     /**
      * @return mixed
-     *      Exits if option 'print'.
+     *      Exits if no/falsy option 'get'.
      */
     protected function cmdGet()
     {
@@ -218,8 +218,8 @@ class CliConfig implements CliCommandInterface
             }
         }
 
-        $print = !empty($this->command->options['print']);
-        $use_inspect = !empty($this->command->options['inspect']);
+        $get = !empty($this->command->options['get']);
+        $use_inspect = !$get && !empty($this->command->options['inspect']);
 
         if ($this->command->inputErrors) {
             foreach ($this->command->inputErrors as $msg) {
@@ -233,7 +233,7 @@ class CliConfig implements CliCommandInterface
             exit;
         }
         // Display command and the arg values used.---------------------
-        if ($print || $use_inspect) {
+        if (!$get) {
             $this->environment->echoMessage(
                 $this->environment->format(
                     $this->environment->format($this->command->name, 'emphasize')
@@ -277,7 +277,7 @@ class CliConfig implements CliCommandInterface
             }
             $value = $config_store->get($section, $key);
         }
-        if (!$print && !$use_inspect) {
+        if ($get) {
             return $value;
         }
         $this->environment->echoMessage('');
@@ -444,7 +444,7 @@ class CliConfig implements CliCommandInterface
                 . '] section[' . $section . '] key[' . $key . '] value[' . addcslashes($value, "\0..\37") . '].',
                 'error'
             );
-        } else {
+        } elseif (!$this->command->silent) {
             $this->environment->echoMessage(
                 'Set config item store[' . $store
                 . '] section[' . $section . '] key[' . $key . '] value[' . addcslashes($value, "\0..\37") . '].',
@@ -547,7 +547,7 @@ class CliConfig implements CliCommandInterface
                 'Failed to delete config item store[' . $store . '] section[' . $section . '] key[' . $key . '].',
                 'error'
             );
-        } else {
+        } elseif (!$this->command->silent) {
             $this->environment->echoMessage(
                 'Deleted config item store[' . $store . '] section[' . $section . '] key[' . $key . '].',
                 'success'
@@ -583,7 +583,7 @@ class CliConfig implements CliCommandInterface
         // Pre-confirmation --yes/-y ignored for this command.
         if ($this->environment->riskyCommandRequireConfirm && $this->command->preConfirmed) {
             $this->command->inputErrors[] = 'Pre-confirmation \'yes\'/-y option not supported for this command,'
-                . "\n" . 'unless env var PHP_LIB_SIMPLECOMPLEX_UTILS_RISKY_COMMAND_SKIP_CONFIRM'
+                . "\n" . 'unless env var PHP_LIB_SIMPLECOMPLEX_UTILS_CLI_SKIP_CONFIRM'
                 . "\n" . 'or .risky_command_skip_confirm file in document root.';
         }
         if ($this->command->inputErrors) {
@@ -639,7 +639,7 @@ class CliConfig implements CliCommandInterface
         // Do it.
         if (!$config_store->refresh()) {
             $this->environment->echoMessage('Failed to refresh config store[' . $store . '].', 'error');
-        } else {
+        } elseif (!$this->command->silent) {
             $this->environment->echoMessage('Refreshed config store[' . $store . '].', 'success');
         }
         exit;
@@ -685,7 +685,7 @@ class CliConfig implements CliCommandInterface
         // Pre-confirmation --yes/-y ignored for this command.
         if ($this->environment->riskyCommandRequireConfirm && $this->command->preConfirmed) {
             $this->command->inputErrors[] = 'Pre-confirmation \'yes\'/-y option not supported for this command,'
-                . "\n" . 'unless env var PHP_LIB_SIMPLECOMPLEX_UTILS_RISKY_COMMAND_SKIP_CONFIRM'
+                . "\n" . 'unless env var PHP_LIB_SIMPLECOMPLEX_UTILS_CLI_SKIP_CONFIRM'
                 . "\n" . 'or .risky_command_skip_confirm file in document root.';
         }
         if ($this->command->inputErrors) {
@@ -755,7 +755,7 @@ class CliConfig implements CliCommandInterface
             ]
         )) {
             $this->environment->echoMessage('Failed to export config store[' . $store . '].', 'error');
-        } else {
+        } elseif (!$this->command->silent) {
             $this->environment->echoMessage(
                 'Exported config store[' . $store . '] from ' . (!$from_sources ? 'cache' : 'sources')
                 . ' to target file[' . $target_file . '].',
