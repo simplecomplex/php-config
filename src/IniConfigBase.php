@@ -293,7 +293,7 @@ abstract class IniConfigBase extends Explorable
             $cache_broker = new $cache_broker_class();
         }
         // Use a persistent (time-to-live forever + ignore arg ttl) cache class.
-        $this->cacheStore = $cache_broker->getStore('config_' . $name, CacheBroker::CACHE_PERSISTENT);
+        $this->cacheStore = $cache_broker->getStore('config.' . $name, CacheBroker::CACHE_PERSISTENT);
         // The cache store must implement ManageableCacheInterface.
         if (!($this->cacheStore instanceof ManageableCacheInterface)) {
             throw new ConfigException(

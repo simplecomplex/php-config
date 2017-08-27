@@ -13,6 +13,7 @@ use SimpleComplex\Utils\CliCommandInterface;
 use SimpleComplex\Utils\CliEnvironment;
 use SimpleComplex\Utils\CliCommand;
 use SimpleComplex\Utils\Dependency;
+use SimpleComplex\Cache\CacheBroker;
 
 /**
  * CLI only.
@@ -49,6 +50,11 @@ class CliConfig implements CliCommandInterface
     /**
      * @var string
      */
+    const CLASS_CACHE_BROKER = CacheBroker::class;
+
+    /**
+     * @var string
+     */
     const CLASS_INSPECT = '\\SimpleComplex\\Inspect\\Inspect';
 
     /**
@@ -66,6 +72,20 @@ class CliConfig implements CliCommandInterface
         $this->environment = CliEnvironment::getInstance();
         // Declare supported commands.
         $this->environment->registerCommands(
+            new CliCommand(
+                $this,
+                static::COMMAND_PROVIDER_ALIAS . '-list-stores',
+                'List all config stores.',
+                [
+                    'match' => 'Regex to match against config store names. Optional.',
+                ],
+                [
+                    'get' => 'Return comma-separated list, don\'t print.',
+                ],
+                [
+                    'g' => 'get',
+                ]
+            ),
             new CliCommand(
                 $this,
                 static::COMMAND_PROVIDER_ALIAS . '-get',
@@ -168,6 +188,82 @@ class CliConfig implements CliCommandInterface
      * @var CliEnvironment
      */
     protected $environment;
+
+    /**
+     * List all config stores.
+     *
+     * A copy of CliCache, except for further check that the cache store name
+     * starts with 'config.'.
+     *
+     * @see \SimpleComplex\Cache\CliCache
+     *
+     * @return mixed
+     *      Exits if no/falsy option 'get'.
+     */
+    protected function cmdListStores() /*: void*/
+    {
+        /**
+         * @see simplecomplex_cache_cli()
+         */
+        $container = Dependency::container();
+        // Validate input. ---------------------------------------------
+        $match = '';
+        if (
+            !empty($this->command->arguments['match'])
+            && ($match = trim($this->command->arguments['match'])) !== ''
+            && !preg_match('/^\/.+\/[a-zA-Z]*$/', $match)
+        ) {
+            $this->command->inputErrors[] = '\'match\' argument must be slash delimited regular expression.';
+        }
+
+        $get = !empty($this->command->options['get']);
+
+        if ($this->command->inputErrors) {
+            foreach ($this->command->inputErrors as $msg) {
+                $this->environment->echoMessage(
+                    $this->environment->format($msg, 'hangingIndent'),
+                    'notice'
+                );
+            }
+            // This command's help text.
+            $this->environment->echoMessage("\n" . $this->command);
+            exit;
+        }
+        // Display command and the arg values used.---------------------
+        // No arg values to list.
+        // Check if the command is doable.------------------------------
+        // Does that/these store(s) exist?
+        if ($container->has('cache-broker')) {
+            /** @var CacheBroker $cache_broker */
+            $cache_broker_class = get_class($container->get('cache-broker'));
+        } else {
+            $cache_broker_class = static::CLASS_CACHE_BROKER;
+        }
+        $cache_class = constant($cache_broker_class . '::CACHE_CLASSES')[CacheBroker::CACHE_BASE];
+        if (!method_exists($cache_class, 'listInstances')) {
+            $this->environment->echoMessage('Cannot retrieve list of cache store instances via class['
+                . $cache_class . '], has no static method listInstances().', 'error');
+            exit;
+        }
+        $stores = forward_static_call($cache_class . '::listInstances');
+
+        // Do it.
+        $names = [];
+        foreach ($stores as $instance) {
+            if (preg_match('/^config\..+/', $instance->name)) {
+                $name = substr($instance->name, 7);
+                if (!$match || preg_match($match, $name)) {
+                    $names[] = $name;
+                }
+            }
+        }
+        sort($names);
+        if ($get) {
+            return join(',', $names);
+        }
+        $this->environment->echoMessage(join("\n", $names));
+        exit;
+    }
 
     /**
      * @return mixed
@@ -793,6 +889,8 @@ class CliConfig implements CliCommandInterface
         $this->environment = CliEnvironment::getInstance();
 
         switch ($command->name) {
+            case static::COMMAND_PROVIDER_ALIAS . '-list-stores':
+                return $this->cmdListStores();
             case static::COMMAND_PROVIDER_ALIAS . '-get':
                 return $this->cmdGet();
             case static::COMMAND_PROVIDER_ALIAS . '-set':

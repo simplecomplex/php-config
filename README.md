@@ -40,16 +40,23 @@ That allows one to clone and use ini-files from multiple version control reposit
 
 > Ini-files are so old-school...
 
-Yep, but they are less error-prone than JSON, YAML, what-not.  
+Aye, but the ini format is less error-prone than JSON, YAML, what-not.  
 The syntax is so simple it's hard to make mistakes. And operations people are used to ini-files.
 
-The cache layer is [SimpleComplex Cache](https://github.com/simplecomplex/php-cache) **``` PersistentFileCache ```**. 
+##### Cache layer #####
+is [SimpleComplex Cache](https://github.com/simplecomplex/php-cache) **``` PersistentFileCache ```**.  
+Cache store names are prefixed with **``` 'config.' ```**  
+Beware of conflict; do not prefix other cache stores that way. 
+
+##### Types of ini-based configuration #####
 
 **``` IniConfig ```**  
-is not sectioned. Simple but probably not that useful.
+is not sectioned. Simple but probably not that useful.  
+``` $value = $config->get('key') ```
 
 **``` IniSectionedConfig ```**  
-is a powerful general usage implementation.
+is a powerful general usage implementation.  
+``` $value = $config->get('section', 'key') ```
 
 Reads ini-files from a _base_ path and an _override_ path.  
 Keep development/production invariant variables (ini-files) in the _base_ path.  
