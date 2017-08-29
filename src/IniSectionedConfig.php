@@ -139,9 +139,6 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
     /**
      * Deletes a configuration variable; from cache, not .ini file.
      *
-     * Also deletes the section, if arg key is the last remaining variable
-     * in the section.
-     *
      * @param string $section
      * @param string $key
      *
