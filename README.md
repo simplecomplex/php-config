@@ -99,6 +99,30 @@ Since the whole thing _runtime_ is cache based, there's no performance reason fo
 Recommendation: access (and thus instantiate) the global config via DI container ID 'config'.  
 See [SimpleComplex Utils](https://github.com/simplecomplex/php-utils) ``` Dependency ```.
 
+### Example ###
+
+```php
+$container = SomeDependencyInjectionContainer();
+$container->set('cache-broker', function () {
+    return new \SimpleComplex\Cache\CacheBroker();
+});
+$container->set('config', function () {
+    return new \SimpleComplex\Config\Config('global');
+});
+// ...
+$container = SomeDependencyInjectionContainer();
+/**
+ * Create or re-initialize the 'global' config store;
+ * based on ini-files placed in base and override paths,
+ * cached by a PSR-16 Simple Cache cache store.
+ *
+ * @var \SimpleComplex\Config\IniSectionedConfig $config
+ */
+$config = $container->get('config');
+/** @var mixed $whatever */
+$whatever = $config->get('some-section', 'some-key', 'the default value');
+```
+
 ### Requirements ###
 
 - PHP >=7.0

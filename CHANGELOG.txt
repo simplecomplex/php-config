@@ -1,3 +1,7 @@
+SimpleComplex/Config 1.x, 2017-08-30
+------------------------------------
+- README supposedly complete.
+
 SimpleComplex/Config 1.x, 2017-08-27
 ------------------------------------
 - Cache store name prefix is now 'config.'; was 'config_'.
