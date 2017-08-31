@@ -102,14 +102,14 @@ See [SimpleComplex Utils](https://github.com/simplecomplex/php-utils) ``` Depend
 ### Example ###
 
 ```php
-$container = SomeDependencyInjectionContainer();
-$container->set('cache-broker', function () {
+Dependency::genericSet('cache-broker', function () {
     return new \SimpleComplex\Cache\CacheBroker();
 });
-$container->set('config', function () {
+Dependency::genericSet('config', function () {
     return new \SimpleComplex\Config\Config('global');
 });
 // ...
+/** @var @ \Container\ContainerInterface $container */
 $container = SomeDependencyInjectionContainer();
 /**
  * Create or re-initialize the 'global' config store;
