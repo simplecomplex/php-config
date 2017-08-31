@@ -102,15 +102,19 @@ See [SimpleComplex Utils](https://github.com/simplecomplex/php-utils) ``` Depend
 ### Example ###
 
 ```php
-Dependency::genericSet('cache-broker', function () {
-    return new \SimpleComplex\Cache\CacheBroker();
-});
-Dependency::genericSet('config', function () {
-    return new \SimpleComplex\Config\Config('global');
-});
+// Bootstrap.
+Dependency::genericSetMultiple([
+    'cache-broker' => function () {
+        return new \SimpleComplex\Cache\CacheBroker();
+    },
+    'config' => function() {
+        return new \SimpleComplex\Config\Config('global');
+    },
+]);
 // ...
-/** @var @ \Container\ContainerInterface $container */
-$container = SomeDependencyInjectionContainer();
+// Use.
+/** @var \Psr\Container\ContainerInterface $container */
+$container = Dependency::container();
 /**
  * Create or re-initialize the 'global' config store;
  * based on ini-files placed in base and override paths,
