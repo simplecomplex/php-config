@@ -18,8 +18,7 @@
     },
     "autoload": {
         "psr-4": {
-            "SimpleComplex\\Config\\": "src/",
-            "SimpleComplex\\Config\\Exception\\": "src/Exception/"
+            "SimpleComplex\\Config\\": "src/"
         }
     }
 }
