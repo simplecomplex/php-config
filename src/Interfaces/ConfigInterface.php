@@ -7,7 +7,7 @@
  */
 declare(strict_types=1);
 
-namespace SimpleComplex\Config;
+namespace SimpleComplex\Config\Interfaces;
 
 /**
  * Like PSR-16 Simple Cache interface, except:

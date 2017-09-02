@@ -7,7 +7,7 @@
  */
 declare(strict_types=1);
 
-namespace SimpleComplex\Config;
+namespace SimpleComplex\Config\Interfaces;
 
 /**
  * Exposes configuration items as children of sections, having composite keys

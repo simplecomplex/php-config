@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config;
 
+use SimpleComplex\Config\Interfaces\SectionedConfigInterface;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\RuntimeException;
 

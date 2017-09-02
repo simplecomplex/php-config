@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SimpleComplex\Config;
 
 use SimpleComplex\Utils\Utils;
+use SimpleComplex\Config\Interfaces\ConfigInterface;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\RuntimeException;
 
@@ -34,7 +35,7 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * @property-read array $paths
  *      Copy, to secure read-only status.
  * @property-read array $fileExtensions
- * @property-read \SimpleComplex\Cache\ManageableCacheInterface $cacheStore
+ * @property-read \SimpleComplex\Cache\Interfaces\ManageableCacheInterface $cacheStore
  *
  * @package SimpleComplex\Config
  */

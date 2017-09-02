@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SimpleComplex\Config;
 
 use SimpleComplex\Utils\Utils;
+use SimpleComplex\Config\Interfaces\ConfigInterface;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\OutOfBoundsException;
 use SimpleComplex\Config\Exception\RuntimeException;

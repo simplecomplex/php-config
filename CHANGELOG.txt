@@ -1,6 +1,7 @@
 SimpleComplex/Config 1.x, 2017-09-02
 ------------------------------------
 - ConfigKey accommodated to fit altered Cache\CacheKey.
+- Interfaces moved to sub dir/namespace.
 
 SimpleComplex/Config 1.x, 2017-08-30
 ------------------------------------
