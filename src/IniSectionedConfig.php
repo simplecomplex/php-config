@@ -49,7 +49,7 @@ use SimpleComplex\Config\Exception\RuntimeException;
  * @property-read array $paths
  *      Copy, to secure read-only status.
  * @property-read array $fileExtensions
- * @property-read \SimpleComplex\Cache\ManageableCacheInterface $cacheStore
+ * @property-read \SimpleComplex\Cache\Interfaces\ManageableCacheInterface $cacheStore
  *
  * @package SimpleComplex\Config
  */

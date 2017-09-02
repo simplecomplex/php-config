@@ -31,7 +31,8 @@ use SimpleComplex\Cache\CacheKey;
 class ConfigKey extends CacheKey
 {
     /**
-     * @see CacheKey::VALID_LENGTH
+     * @see CacheKey::VALID_LENGTH_MIN
+     * @see CacheKey::VALID_LENGTH_MAX
      */
 
     /**
