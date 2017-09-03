@@ -39,8 +39,7 @@ class Config extends IniSectionedConfig
      * @param string $name
      *      Default: global
      *
-     * @return IniSectionedConfig
-     *      static, really, but IDE might not resolve that.
+     * @return IniSectionedConfig|static
      */
     public static function getInstance($name = 'global')
     {
