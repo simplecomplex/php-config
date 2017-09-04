@@ -147,6 +147,7 @@ class CliConfig implements CliCommandInterface
                 static::COMMAND_PROVIDER_ALIAS . '-refresh',
                 'Refreshes the config store\'s cache store,'
                 . ' loading fresh configuration from all .ini files in the base and override paths.'
+                . "\n" . 'The fresh store gets applied atomically, when fully built.'
                 . "\n" . 'NB: All items that have been set, overwritten or deleted since last refresh'
                 . ' will be gone or restored to .ini-files\' original state.',
                 [

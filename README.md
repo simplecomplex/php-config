@@ -1,5 +1,8 @@
 ## Config ##
 
+- [Installation](#installation)
+- [Requirements](#requirements)
+
 ### Simple and sectioned configuration interfaces ###
 
 **``` ConfigInterface ```**  
@@ -126,6 +129,59 @@ $config = $container->get('config');
 /** @var mixed $whatever */
 $whatever = $config->get('some-section', 'some-key', 'the default value');
 ```
+
+### CLI commands ###
+
+```bash
+# List all config commands and their help.
+php cli.phpsh config -h
+# One command's help.
+php cli.phpsh config-xxx -h
+
+# List existing config stores.
+php cli.phpsh config-list-stores
+
+# Display/get value of a config item.
+php cli.phpsh config-get store section key
+
+# Set a config item.
+php cli.phpsh config-set store section key value
+
+# Delete a config item.
+php cli.phpsh config-delete store section key
+
+# Refresh a config store from .ini file sources.
+# The fresh store gets applied atomically, when fully built.
+php cli.phpsh config-refresh store
+
+# Export a config store as JSON to a file.
+php cli.phpsh config-export store target-path-and-file
+```
+
+### Installation ###
+
+Create a 'conf' directory alongside the document root dir.
+
+Like:  
+```/var/www/my-host/```**```http```**  
+```/var/www/my-host/```**```conf```**
+
+Create 'base' and 'override' paths within the 'conf', like:  
+```conf/```**```ini/base```**  
+```conf/```**```ini/override```**  
+
+For the 'global' config store, place or symlink or git clone your system's  
+.ini configuration files under the 'base' and 'override' paths  
+using file extension ```global.ini``` (= ```[store name].ini```).
+
+Like:  
+```conf/ini/base/```**```some-ding.global.ini```**  
+```conf/ini/override/```**```some-ding.prod.global.ini```**  
+
+If that directory structure isn't suitable, do either:
+- supply **```IniSectionedConfig```** constructor with a 'paths' argument
+- extend **```IniSectionedConfig```** and override it's class constant **```PATH_DEFAULTS```**
+
 
 ### Requirements ###
 
