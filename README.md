@@ -191,4 +191,4 @@ If that directory structure isn't suitable, do either:
 
 ##### Suggestions #####
 
-- [SimpleComplex Inspect](https://github.com/simplecomplex/inspect) (CLI features require it)
+- [SimpleComplex Inspect](https://github.com/simplecomplex/inspect)
