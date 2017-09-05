@@ -179,8 +179,8 @@ Like:
 ```conf/ini/override/```**```some-ding.prod.global.ini```**  
 
 If that directory structure isn't suitable, do either:
-- supply **```IniSectionedConfig```** constructor with a 'paths' argument
-- extend **```IniSectionedConfig```** and override it's class constant **```PATH_DEFAULTS```**
+- supply **```Config```** constructor with a 'paths' argument
+- extend **```Config```** and override it's class constant **```PATH_DEFAULTS```**
 
 
 ### Requirements ###
