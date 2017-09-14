@@ -19,6 +19,12 @@ namespace SimpleComplex\Config;
  * @dependency-injection-container config
  *      Suggested ID of the Config 'global' instance.
  *
+ * @cache-store config.global
+ *      Name of cache store used by this class (effectively).
+ *
+ * @config-store global
+ *      Name of config store used by this class (effectively).
+ *
  * @package SimpleComplex\Config
  */
 class Config extends IniSectionedConfig
