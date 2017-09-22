@@ -470,9 +470,9 @@ abstract class IniConfigBase extends Explorable
                                 if ($this->escapeSourceKeys) {
                                     $utils->unescapeIniKeys($settings_in_file, true);
                                 }
-                                // Let variables of latter file _append to_
-                                // settings of previous file.
-                                $settings_in_path = array_merge_recursive($settings_in_path, $settings_in_file);
+                                // Let numerically indexed variables of latter
+                                // file _append_ to settings of previous file.
+                                $settings_in_path = $utils->arrayMergeRecursive($settings_in_path, $settings_in_file);
                             }
                         }
                     } else {
@@ -484,9 +484,9 @@ abstract class IniConfigBase extends Explorable
                         if ($this->escapeSourceKeys) {
                             $utils->unescapeIniKeys($settings_in_file);
                         }
-                        // Let variables of latter file _append to_
-                        // settings of previous file.
-                        $settings_in_path = array_merge_recursive($settings_in_path, $settings_in_file);
+                        // Let numerically indexed variables of latter
+                        // file _append_ to settings of previous file.
+                        $settings_in_path = $utils->arrayMergeRecursive($settings_in_path, $settings_in_file);
                     }
                 }
                 if ($settings_in_path) {

@@ -1,3 +1,8 @@
+SimpleComplex/Config 1.x, 2017-09-22
+------------------------------------
+- Major bug fix: eliminated risk of dupe key scalar values become array.
+  Removed warnings from .ini-files' documentation.
+
 SimpleComplex/Config 1.x, 2017-09-02
 ------------------------------------
 - ConfigKey accommodated to fit altered Cache\CacheKey.
