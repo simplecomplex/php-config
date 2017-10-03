@@ -706,6 +706,18 @@ abstract class IniConfigBase extends Explorable
         }
         ksort($collection);
 
+        if ($this->useSourceSections) {
+            // Fix that empty section must be object, not array; PHP json_encode()
+            // encodes empty array as array, even in non-assoc mode.
+            foreach ($collection as &$section) {
+                if (!$section) {
+                    $section = new \stdClass();
+                }
+            }
+            // Iteration ref.
+            unset($section);
+        }
+
         if (!empty($options['format'])) {
             if (!is_string($options['format'])) {
                 throw new \TypeError('Arg options bucket format must be string or empty.');

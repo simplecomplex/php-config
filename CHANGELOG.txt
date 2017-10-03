@@ -1,3 +1,9 @@
+SimpleComplex/Config 1.x, 2017-10-03
+------------------------------------
+- Fix that (sectioned config) empty section must be object, not array;
+  PHP json_encode() encodes empty array as array, even in non-assoc mode.
+- Release 1.1.1.
+
 SimpleComplex/Config 1.x, 2017-09-24
 ------------------------------------
 - Release 1.1.
