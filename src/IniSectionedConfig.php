@@ -56,6 +56,14 @@ use SimpleComplex\Config\Exception\RuntimeException;
  */
 class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterface
 {
+    /**
+     * This class does _not_ support long cache keys.
+     *
+     * @see IniSectionedConfig::set()
+     *
+     * @see IniConfigBase::CACHE_KEY_LONG
+     */
+
     // SectionedConfigInterface.------------------------------------------------
 
     /**

@@ -1,3 +1,8 @@
+SimpleComplex/Config 1.x, 2017-10-10
+------------------------------------
+- .ini sectioned flat config support long cache keys.
+- Release 1.2.
+
 SimpleComplex/Config 1.x, 2017-10-03
 ------------------------------------
 - Fix that (sectioned config) empty section must be object, not array;

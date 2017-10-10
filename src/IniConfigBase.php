@@ -52,6 +52,15 @@ abstract class IniConfigBase extends Explorable
     const CLASS_CACHE_BROKER = CacheBroker::class;
 
     /**
+     * Use cache that allows long keys; 128 chars instead of 64.
+     *
+     * @see ConfigKeyLong
+     *
+     * @var bool
+     */
+    const CACHE_KEY_LONG = false;
+
+    /**
      * @var string
      */
     protected $name;
@@ -293,7 +302,10 @@ abstract class IniConfigBase extends Explorable
             $cache_broker = new $cache_broker_class();
         }
         // Use a persistent (time-to-live forever + ignore arg ttl) cache class.
-        $this->cacheStore = $cache_broker->getStore('config.' . $name, CacheBroker::CACHE_PERSISTENT);
+        $this->cacheStore = $cache_broker->getStore(
+            'config.' . $name,
+            !static::CACHE_KEY_LONG ? CacheBroker::CACHE_PERSISTENT : CacheBroker::CACHE_KEY_LONG_PERSISTENT
+        );
         // The cache store must implement ManageableCacheInterface.
         if (!($this->cacheStore instanceof ManageableCacheInterface)) {
             throw new ConfigException(
@@ -609,7 +621,13 @@ abstract class IniConfigBase extends Explorable
                     foreach ($arr_subs as $key => $value) {
                         $concat_key = $section . $this->sectionKeyDelimiter . $key;
                         // Check that the final key isn't too long.
-                        if (!ConfigKey::validate($concat_key)) {
+                        if (!static::CACHE_KEY_LONG) {
+                            if (!ConfigKey::validate($concat_key)) {
+                                throw new ConfigException(
+                                    'Concatted section+delimiter+key key is not valid, concatted[' . $concat_key . '].'
+                                );
+                            }
+                        } elseif (!ConfigKeyLong::validate($concat_key)) {
                             throw new ConfigException(
                                 'Concatted section+delimiter+key key is not valid, concatted[' . $concat_key . '].'
                             );

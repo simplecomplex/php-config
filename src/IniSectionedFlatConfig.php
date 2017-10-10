@@ -48,6 +48,14 @@ use SimpleComplex\Config\Exception\RuntimeException;
  */
 class IniSectionedFlatConfig extends IniConfigBase implements SectionedConfigInterface
 {
+    /**
+     * This class supports long cache keys.
+     *
+     * @see IniSectionedFlatConfig::set()
+     *
+     * @see IniConfigBase::CACHE_KEY_LONG
+     */
+
     // SectionedConfigInterface.------------------------------------------------
 
     /**
@@ -74,7 +82,14 @@ class IniSectionedFlatConfig extends IniConfigBase implements SectionedConfigInt
     public function set(string $section, string $key, $value) : bool
     {
         $concat = $section . $this->sectionKeyDelimiter . $key;
-        if (!ConfigKey::validate($concat)) {
+        if (!static::CACHE_KEY_LONG) {
+            if (!ConfigKey::validate($concat)) {
+                throw new InvalidArgumentException(
+                    'Arg section or key does not conform with .ini file and/or cache key requirements, concatted['
+                    . $concat . '].'
+                );
+            }
+        } elseif (!ConfigKeyLong::validate($concat)) {
             throw new InvalidArgumentException(
                 'Arg section or key does not conform with .ini file and/or cache key requirements, concatted['
                 . $concat . '].'
