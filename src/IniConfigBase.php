@@ -672,6 +672,8 @@ abstract class IniConfigBase extends Explorable
      *          (JSON) don't escape slash, tag, quotes, ampersand, unicode chars.
      *      @var bool $pretty
      *          (JSON) pretty-print.
+     *      @var string $jsVar
+     *          Javascript global (window.) variable name to export unescaped JSON to.
      * }
      *
      * @return bool
@@ -757,12 +759,19 @@ abstract class IniConfigBase extends Explorable
             case 'JSON':
                 $unescaped = !empty($options['unescaped']);
                 $pretty = !empty($options['pretty']);
+                $js_var = !empty($options['jsVar']) ? trim($options['jsVar']) : '';
+                if ($js_var) {
+                    $unescaped = true;
+                }
                 $encoded = json_encode(
                     $collection,
                     (!$unescaped ? (JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) :
                         (JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
                     | (!$pretty ? 0 : JSON_PRETTY_PRINT)
                 );
+                if ($js_var) {
+                    $encoded = 'window.' . $js_var . '=' . $encoded . ';';
+                }
                 break;
             default:
                 throw new LogicException('Algo error, unsupported format[' . $options['format'] . '].');

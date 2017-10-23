@@ -164,6 +164,7 @@ class CliConfig implements CliCommandInterface
                     'store' => 'Config store name.',
                     'target-file' => 'Path and filename; the path must exist already.'
                         . "\n" . 'Relative is relative to document root.',
+                    'js-var' => 'Javascript global (window.) variable name to export unescaped JSON to.',
                 ],
                 [
                     'from-sources' => 'From source paths\' ini files; not cache.',
@@ -779,6 +780,14 @@ class CliConfig implements CliCommandInterface
         $unescaped = !empty($this->command->options['unescaped']);
         $pretty = !empty($this->command->options['pretty']);
 
+        $js_var = '';
+        if (!empty($this->command->arguments['js-var'])) {
+            $js_var = $this->command->arguments['js-var'];
+            $format = 'JSON';
+            $unescaped = true;
+            $pretty = false;
+        }
+
         // Pre-confirmation --yes/-y ignored for this command.
         if ($this->environment->riskyCommandRequireConfirm && $this->command->preConfirmed) {
             $this->command->inputErrors[] = 'Pre-confirmation \'yes\'/-y option not supported for this command,'
@@ -849,6 +858,7 @@ class CliConfig implements CliCommandInterface
                 'format' => strtoupper($format),
                 'unescaped' => $unescaped,
                 'pretty' => $pretty,
+                'jsVar' => $js_var,
             ]
         )) {
             $this->environment->echoMessage('Failed to export config store[' . $store . '].', 'error');
