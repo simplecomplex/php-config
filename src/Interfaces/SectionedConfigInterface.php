@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Config\Interfaces;
 
+use SimpleComplex\Utils\Interfaces\SectionedMapInterface;
+
 /**
  * Exposes configuration items as children of sections, having composite keys
  * as 'section' + 'key'.
@@ -32,14 +34,15 @@ namespace SimpleComplex\Config\Interfaces;
  * Implementations must expose instance property 'name'. The property is allowed
  * to be virtual; see SectionedWrapper::__get().
  *
- * @see ConfigInterface
- * @see SectionedWrapper::__get()
- *
  * @property-read string $name
+ *
+ * Extends the Utils package's general use sectioned hashmap interface to avoid
+ * forcing dependency of this package when not strictly required.
+ * @see SectionedMapInterface
  *
  * @package SimpleComplex\Config
  */
-interface SectionedConfigInterface
+interface SectionedConfigInterface extends SectionedMapInterface
 {
     /**
      * Fetches an item from the configuration store.
@@ -177,6 +180,8 @@ interface SectionedConfigInterface
     // Expose read-only instance property 'name'.
 
     /**
+     * @see SectionedWrapper::__get()
+     *
      * @param mixed $name
      *
      * @return string
@@ -184,6 +189,8 @@ interface SectionedConfigInterface
     public function __get($name);
 
     /**
+     * @see SectionedWrapper::__set()
+     *
      * @param mixed $name
      * @param mixed $value
      *

@@ -1,3 +1,9 @@
+SimpleComplex/Config 1.x, 2018-03-26
+------------------------------------
+- Sectioned config interface now extends the Utils package's general use
+  sectioned hashmap interface to avoid forcing dependency of this package
+  when not strictly required.
+
 SimpleComplex/Config 1.x, 2017-10-10
 ------------------------------------
 - .ini sectioned flat config support long cache keys.
