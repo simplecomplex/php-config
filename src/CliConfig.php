@@ -122,12 +122,14 @@ class CliConfig implements CliCommandInterface
                     'float' => 'Set as float.',
                     'bool' => 'Set as boolean, use 0|1|true|false for arg value.',
                     'json' => 'Arg value is JSON-encoded.',
+                    'array' => '(with \'json\' option) Set object value as array.',
                 ],
                 [
                     'i' => 'int',
                     'f' => 'float',
                     'b' => 'bool',
                     'j' => 'json',
+                    'r' => 'array',
                 ]
             ),
             new CliCommand(
@@ -444,6 +446,7 @@ class CliConfig implements CliCommandInterface
         $float = !empty($this->command->options['float']);
         $bool = !empty($this->command->options['bool']);
         $json = !empty($this->command->options['json']);
+        $array = $json && !empty($this->command->options['array']);
 
         if (((int) $int + (int) $float + (int) $bool + (int) $json) > 1) {
             $this->command->inputErrors[] = 'Cannot use more than a single value type option.';
@@ -482,6 +485,9 @@ class CliConfig implements CliCommandInterface
                     $converted_value = json_decode($value);
                     if ($converted_value === null) {
                         $this->command->inputErrors[] = 'Arg value[' . $value . '] is not valid JSON.';
+                    }
+                    elseif ($array && is_object($converted_value)) {
+                        $converted_value = (array) $converted_value;
                     }
                 }
             }
@@ -544,7 +550,8 @@ class CliConfig implements CliCommandInterface
         } elseif (!$this->command->silent) {
             $this->environment->echoMessage(
                 'Set config item store[' . $store
-                . '] section[' . $section . '] key[' . $key . '] value[' . addcslashes($value, "\0..\37") . '].',
+                . '] section[' . $section . '] key[' . $key . '] value[' . addcslashes($value, "\0..\37") . ']'
+                . ($json && $array ? ' as array' : '') . '.',
                 'success'
             );
         }
