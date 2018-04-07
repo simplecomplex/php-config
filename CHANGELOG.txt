@@ -1,6 +1,8 @@
 SimpleComplex/Config 1.x, 2018-04-07
 ------------------------------------
+- Package requires Utils package ^1.2.
 - CLI config-set option 'array' (-r) to set 'json' (object) value as array.
+- Release 1.3.
 
 SimpleComplex/Config 1.x, 2018-03-26
 ------------------------------------
