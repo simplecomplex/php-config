@@ -12,7 +12,7 @@ namespace SimpleComplex\Config;
 use SimpleComplex\Utils\Explorable;
 use SimpleComplex\Utils\Utils;
 use SimpleComplex\Utils\Dependency;
-use SimpleComplex\Utils\PathFileList;
+use SimpleComplex\Utils\PathList;
 use SimpleComplex\Cache\CacheBroker;
 use SimpleComplex\Cache\Interfaces\ManageableCacheInterface;
 use SimpleComplex\Cache\Interfaces\BackupCacheInterface;
@@ -250,7 +250,7 @@ abstract class IniConfigBase extends Explorable
      * Will return effectively identical instance on second call, when given
      * the same arguments; an instance is basically a wrapped cache store.
      *
-     * Cache store name is 'config_[arg name]'.
+     * Cache store name is 'config.[arg name]'.
      * Cache store type is 'persistent'; no end of life.
      *
      * @uses CacheBroker::getStore()
@@ -402,7 +402,7 @@ abstract class IniConfigBase extends Explorable
      * Reads and parses all .ini files found in instance var paths.
      *
      * @see Utils::resolvePath()
-     * @see Utils::PathFileList()
+     * @see Utils::PathList()
      * @see Utils::parseIniString()
      *
      * @param bool $allowNone
@@ -447,8 +447,8 @@ abstract class IniConfigBase extends Explorable
                     . ' path is not a directory, path[' . $absolute_path . ']'
                 );
             }
-            // Find all .ini files in the path, recursively.
-            $files = (new PathFileList($absolute_path, $this->fileExtensions))->getArrayCopy();
+            // Find all .[store name].ini files in the path, recursively.
+            $files = (new PathList($absolute_path))->includeExtensions($this->fileExtensions)->find();
             if ($files) {
                 // Parse all .ini files in the path.
                 $settings_in_path = [];
