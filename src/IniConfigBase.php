@@ -13,6 +13,7 @@ use SimpleComplex\Utils\Explorable;
 use SimpleComplex\Utils\Utils;
 use SimpleComplex\Utils\Dependency;
 use SimpleComplex\Utils\PathList;
+use SimpleComplex\Utils\CliEnvironment;
 use SimpleComplex\Cache\CacheBroker;
 use SimpleComplex\Cache\Interfaces\ManageableCacheInterface;
 use SimpleComplex\Cache\Interfaces\BackupCacheInterface;
@@ -408,6 +409,8 @@ abstract class IniConfigBase extends Explorable
      *
      * @param bool $allowNone
      *      Falsy: throws ConfigException is no settings found at all.
+     * @param bool $verbose
+     *      CLI mode only, list source .ini files used.
      *
      * @return array
      *
@@ -419,7 +422,7 @@ abstract class IniConfigBase extends Explorable
      * @throws \Throwable
      *      Propagated.
      */
-    protected function readFromSources($allowNone = false) : array
+    protected function readFromSources(bool $allowNone = false, bool $verbose = false) : array
     {
         // Settle paths, unless already done.
         if (is_array($this->pathsPassed)) {
@@ -427,9 +430,85 @@ abstract class IniConfigBase extends Explorable
         }
 
         $utils = Utils::getInstance();
+        $cli_env = $verbose && CliEnvironment::cli() ? new CliEnvironment() : null;
 
         $collection = [];
         $n_files = 0;
+
+        // Discovery mode: the base path contains list of packages-by-vendor
+        // which contains relevant ini-files.
+        $discovery_file = null;
+        if (!empty($this->paths['base'])) {
+            $discovery_file = $utils->resolvePath(
+                // ../conf/ini/base/config.global.discover-ini-source-packages.ini
+                $this->paths['base'] . '/config.' . $this->name . '.discover-ini-source-packages.ini'
+            );
+            if (file_exists($discovery_file) && is_file($discovery_file)) {
+                $discovery_info = $utils->parseIniFile($discovery_file, true, true);
+                if (empty($discovery_info['vendor-dir'])) {
+                    throw new ConfigException(
+                        'Config discovery mode package list file[' . $discovery_file . '] key \'vendor-dir\' is '
+                        . (isset($discovery_info['vendor-dir']) ? 'empty' : 'missing') . '.'
+                    );
+                }
+                if (!isset($discovery_info['packages-by-vendors'])) {
+                    throw new ConfigException(
+                        'Config discovery mode package list file[' . $discovery_file
+                        . '] section \'packages-by-vendors\' is missing.'
+                    );
+                }
+                if ($discovery_info['packages-by-vendors']) {
+                    $vendor_dir = trim($discovery_info['vendor-dir'], '/');
+                    $files = (new PathList(''))->includeExtensions($this->fileExtensions);
+                    foreach ($discovery_info['packages-by-vendors'] as $vendor => $packages) {
+                        if ($packages) {
+                            $files->reset();
+                            if ($packages === '*') {
+                                $files->path($vendor_dir . '/' . $vendor)->find();
+                            }
+                            elseif (is_array($packages)) {
+                                foreach ($packages as $package) {
+                                    $files->path($vendor_dir . '/' . $vendor . '/' . $package)->find();
+                                }
+                            }
+                            else {
+                                throw new ConfigException(
+                                    'Config discovery mode package list file[' . $discovery_file
+                                    . '] section \'packages-by-vendors\' vendor key[' . $vendor
+                                    . '] is neither wildcard string * nor array.'
+                                );
+                            }
+                            if ($files->count()) {
+                                $n_files += $files->count();
+                                if ($verbose && $cli_env) {
+                                    $cli_env->echoMessage(
+                                        'Discovered .ini sources under vendor[' . $vendor . ']:' . "\n"
+                                        . join("\n", $files->getArrayCopy())
+                                    );
+                                }
+                                if (!$collection) {
+                                    $collection = $this->readFromPath('- discovery mode -', $files);
+                                }
+                                else {
+                                    // Let numerically indexed variables of latter
+                                    // vendor _append_ to settings of previous vendor.
+                                    // Allow competing associative keys (and sub-keys)
+                                    // to override.
+                                    $collection = $utils->arrayMergeRecursive(
+                                        $collection,
+                                        $this->readFromPath('- discovery mode -', $files)
+                                    );
+                                }
+                            }
+                            elseif ($verbose && $cli_env) {
+                                $cli_env->echoMessage('Discovered no .ini sources under vendor[' . $vendor . '].');
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         foreach ($this->paths as $path_name => $path) {
             if (!$path) {
                 continue;
@@ -450,90 +529,18 @@ abstract class IniConfigBase extends Explorable
             }
             // Find all .[store name].ini files in the path, recursively.
             $files = (new PathList($absolute_path))->includeExtensions($this->fileExtensions)->find();
-            if ($files) {
-                // Parse all .ini files in the path.
-                $settings_in_path = [];
-                foreach ($files as $path_file) {
-                    ++$n_files;
-                    if ($this->useSourceSections) {
-                        $ini = trim(
-                            file_get_contents($path_file)
-                        );
-                        if ($ini) {
-                            // Check that the whole configuration begins with a [section].
-                            // Remove comments and leading empty lines.
-                            $ini = ltrim(
-                                preg_replace(
-                                    '/\n;[^\n]*/m',
-                                    "\n",
-                                    "\n" . str_replace("\r", '', $ini)
-                                )
-                            );
-                            if (trim($ini)) {
-                                if (!preg_match('/^\[/', $ini)) {
-                                    throw new ConfigException(
-                                        'Using source sections, an .ini file must declare a [section] before flat vars,'
-                                        . 'file[' . $path_file . '].'
-                                    );
-                                }
-                                if ($this->escapeSourceKeys) {
-                                    $ini = $utils->escapeIniKeys($ini);
-                                }
-                                $settings_in_file = $utils->parseIniString($ini, true, $this->parseTyped);
-                                if ($settings_in_file) {
-                                    if ($this->escapeSourceKeys) {
-                                        $utils->unescapeIniKeys($settings_in_file, true);
-                                    }
-                                    // Let numerically indexed variables of latter
-                                    // file _append_ to settings of previous file.
-                                    // Detect competing associative keys (and sub-keys)
-                                    // both having non-array value.
-                                    try {
-                                        foreach ($settings_in_file as $section => $list) {
-                                            if (empty($settings_in_path[$section])) {
-                                                $settings_in_path[$section] = $settings_in_file[$section];
-                                            }
-                                            else {
-                                                $settings_in_path[$section] = $utils->arrayMergeUniqueRecursive(
-                                                    $settings_in_path[$section],
-                                                    $settings_in_file[$section]
-                                                );
-                                            }
-                                        }
-                                    }
-                                    catch (KeyNonUniqueException $xcptn) {
-                                        throw new ConfigException(
-                                            'Competing associative keys (and sub-keys) both having non-array value'
-                                            . ' are illegal within same path[' . $path_name . ']: '
-                                            . $xcptn->getMessage()
-                                        );
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    // Flat non-sectioned; sections ignored.
-                    else {
-                        $ini = trim(file_get_contents($path_file));
-                        if ($this->escapeSourceKeys) {
-                            $ini = $utils->escapeIniKeys($ini);
-                        }
-                        $settings_in_file = $utils->parseIniString($ini, false, $this->parseTyped);
-                        if ($this->escapeSourceKeys) {
-                            $utils->unescapeIniKeys($settings_in_file);
-                        }
-                        // Let numerically indexed variables of latter
-                        // file _append_ to settings of previous file.
-                        // Allow competing associative keys (and sub-keys)
-                        // to override (because we don't care; non-sectional
-                        // mode is toy mode).
-                        $settings_in_path = $utils->arrayMergeRecursive($settings_in_path, $settings_in_file);
-                    }
+            if ($files->count()) {
+                $n_files += $files->count();
+                if ($verbose && $cli_env) {
+                    $cli_env->echoMessage(
+                        'Found .ini sources in path[' . $path_name . ']:' . "\n"
+                        . join("\n", $files->getArrayCopy())
+                    );
                 }
+                $settings_in_path = $this->readFromPath($path_name, $files);
                 if ($settings_in_path) {
                     if (!$collection) {
-                        $collection =& $settings_in_path;
-                        unset($settings_in_path);
+                        $collection = $settings_in_path;
                     }
                     else {
                         // Let variables of latter path _override_ settings
@@ -545,12 +552,16 @@ abstract class IniConfigBase extends Explorable
                     }
                 }
             }
+            elseif ($verbose && $cli_env) {
+                $cli_env->echoMessage('Found no .ini sources in path[' . $path_name . '].');
+            }
         }
         if (!$allowNone && !$collection) {
             if (!$n_files) {
                 throw new ConfigException(
                     'Found no configuration files at all, looking for extensions[' . join(', ', $this->fileExtensions)
-                    . '] in paths[' . join(', ', $this->paths) . '].'
+                    . ']' . (!$discovery_file ? '' : (' in packages defined by discovery mode file['
+                    . $discovery_file . '] and')) . ' in paths[' . join(', ', $this->paths) . '].'
                 );
             }
             throw new ConfigException(
@@ -558,6 +569,98 @@ abstract class IniConfigBase extends Explorable
             );
         }
         return $collection;
+    }
+
+    /**
+     * @param string $path_name
+     * @param PathList $files
+     *
+     * @return array
+     */
+    protected function readFromPath(string $path_name, PathList $files)
+    {
+        $utils = Utils::getInstance();
+
+        // Parse all .ini files in the path.
+        $settings_in_path = [];
+        foreach ($files as $path_file) {
+            if ($this->useSourceSections) {
+                $ini = trim(
+                    file_get_contents($path_file)
+                );
+                if ($ini) {
+                    // Check that the whole configuration begins with a [section].
+                    // Remove comments and leading empty lines.
+                    $ini = ltrim(
+                        preg_replace(
+                            '/\n;[^\n]*/m',
+                            "\n",
+                            "\n" . str_replace("\r", '', $ini)
+                        )
+                    );
+                    if (trim($ini)) {
+                        if (!preg_match('/^\[/', $ini)) {
+                            throw new ConfigException(
+                                'Using source sections, an .ini file must declare a [section] before flat vars,'
+                                . 'file[' . $path_file . '].'
+                            );
+                        }
+                        if ($this->escapeSourceKeys) {
+                            $ini = $utils->escapeIniKeys($ini);
+                        }
+                        $settings_in_file = $utils->parseIniString($ini, true, $this->parseTyped);
+                        if ($settings_in_file) {
+                            if ($this->escapeSourceKeys) {
+                                $utils->unescapeIniKeys($settings_in_file, true);
+                            }
+                            // Let numerically indexed variables of latter
+                            // file _append_ to settings of previous file.
+                            // Detect competing associative keys (and sub-keys)
+                            // both having non-array value.
+                            try {
+                                foreach ($settings_in_file as $section => $list) {
+                                    if (empty($settings_in_path[$section])) {
+                                        $settings_in_path[$section] = $settings_in_file[$section];
+                                    }
+                                    else {
+                                        $settings_in_path[$section] = $utils->arrayMergeUniqueRecursive(
+                                            $settings_in_path[$section],
+                                            $settings_in_file[$section]
+                                        );
+                                    }
+                                }
+                            }
+                            catch (KeyNonUniqueException $xcptn) {
+                                throw new ConfigException(
+                                    'Competing associative keys (and sub-keys) both having non-array value'
+                                    . ' are illegal within same path[' . $path_name . ']: '
+                                    . $xcptn->getMessage()
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+            // Flat non-sectioned; sections ignored.
+            else {
+                $ini = trim(file_get_contents($path_file));
+                if ($this->escapeSourceKeys) {
+                    $ini = $utils->escapeIniKeys($ini);
+                }
+                $settings_in_file = $utils->parseIniString($ini, false, $this->parseTyped);
+                if ($this->escapeSourceKeys) {
+                    $utils->unescapeIniKeys($settings_in_file);
+                }
+                // Let numerically indexed variables of latter
+                // file _append_ to settings of previous file.
+                // Allow competing associative keys (and sub-keys)
+                // to override (because we don't care; non-sectional
+                // mode is toy mode).
+                $settings_in_path = $utils->arrayMergeRecursive($settings_in_path, $settings_in_file);
+            }
+        }
+
+        return $settings_in_path;
     }
 
     /**
@@ -574,7 +677,10 @@ abstract class IniConfigBase extends Explorable
      * @see IniConfigBase::readFromSources()
      * @see \Psr\SimpleCache\CacheInterface::setMultiple()
      *
-     * @param bool
+     * @param bool $allowNone
+     *      Falsy: throws ConfigException is no settings found at all.
+     * @param bool $verbose
+     *      CLI mode only, list source .ini files used.
      *
      * @return bool
      *      False: no configuration variables found in .ini files of the paths.
@@ -584,7 +690,7 @@ abstract class IniConfigBase extends Explorable
      * @throws \Throwable
      *      Propagated, from cache store.
      */
-    public function refresh() : bool
+    public function refresh(bool $allowNone = false, bool $verbose = false) : bool
     {
         $empty = $this->cacheStore->isEmpty();
 
@@ -599,8 +705,9 @@ abstract class IniConfigBase extends Explorable
 
         // Load all variables from .ini file sources.
         try {
-            $collection = $this->readFromSources();
-        } catch (\Throwable $xc) {
+            $collection = $this->readFromSources($allowNone, $verbose);
+        }
+        catch (\Throwable $xc) {
             // Fail gracefully, if:
             // + building via cache candidate (safe mode, sort of)
             // + there's a logger
@@ -624,8 +731,8 @@ abstract class IniConfigBase extends Explorable
                         ]);
                     }
                     // CLI mode: echo description of the situation.
-                    if (\SimpleComplex\Utils\CliEnvironment::cli()) {
-                        (new \SimpleComplex\Utils\CliEnvironment())->echoMessage(
+                    if (CliEnvironment::cli()) {
+                        (new CliEnvironment())->echoMessage(
                             $xc->getMessage()
                             . "\n" . 'Failed to build from sources, however existing cache prevails.'
                             . ' The incident was logged.',

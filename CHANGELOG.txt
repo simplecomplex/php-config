@@ -3,6 +3,10 @@ SimpleComplex/Config 1.x, 2018-06-23
 - Competing associative keys (and sub-keys) both having non-array value
   within same ini path (base, override) is now illegal; because there can't
   be any guarantee that the same value will 'win' on every config refresh.
+- New .ini file discovery mode, using base path file
+  config.[store-name].discover-ini-source-packages.ini.
+  Backwards compatible.
+- CLI config-refresh options allow-none and verbose.
 
 SimpleComplex/Config 1.x, 2018-06-19
 ------------------------------------

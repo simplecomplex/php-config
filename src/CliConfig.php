@@ -155,8 +155,14 @@ class CliConfig implements CliCommandInterface
                 [
                     'store' => 'Config store name.',
                 ],
-                [],
-                []
+                [
+                    'allow-none' => 'Allow no configuration at all.',
+                    'verbose' => 'List source .ini-files used.',
+                ],
+                [
+                    'z' => 'allow-none',
+                    'v' => 'verbose',
+                ]
             ),
             new CliCommand(
                 $this,
@@ -684,6 +690,8 @@ class CliConfig implements CliCommandInterface
                 $this->command->inputErrors[] = 'Invalid \'store\' argument.';
             }
         }
+        $allow_none = !empty($this->command->options['allow-none']);
+        $verbose = !empty($this->command->options['verbose']);
         // Pre-confirmation --yes/-y ignored for this command.
         if ($this->environment->riskyCommandRequireConfirm && $this->command->preConfirmed) {
             $this->command->inputErrors[] = 'Pre-confirmation \'yes\'/-y option not supported for this command,'
@@ -741,7 +749,7 @@ class CliConfig implements CliCommandInterface
             $config_store = new $config_class($store);
         }
         // Do it.
-        if (!$config_store->refresh()) {
+        if (!$config_store->refresh($allow_none, $verbose)) {
             $this->environment->echoMessage('Failed to refresh config store[' . $store . '].', 'error');
         } elseif (!$this->command->silent) {
             $this->environment->echoMessage('Refreshed config store[' . $store . '].', 'success');
