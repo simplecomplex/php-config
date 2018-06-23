@@ -20,6 +20,7 @@ use SimpleComplex\Config\Exception\LogicException;
 use SimpleComplex\Config\Exception\InvalidArgumentException;
 use SimpleComplex\Config\Exception\OutOfBoundsException;
 use SimpleComplex\Config\Exception\ConfigException;
+use SimpleComplex\Utils\Exception\KeyNonUniqueException;
 use SimpleComplex\Config\Exception\RuntimeException;
 
 /**
@@ -479,15 +480,40 @@ abstract class IniConfigBase extends Explorable
                                     $ini = $utils->escapeIniKeys($ini);
                                 }
                                 $settings_in_file = $utils->parseIniString($ini, true, $this->parseTyped);
-                                if ($this->escapeSourceKeys) {
-                                    $utils->unescapeIniKeys($settings_in_file, true);
+                                if ($settings_in_file) {
+                                    if ($this->escapeSourceKeys) {
+                                        $utils->unescapeIniKeys($settings_in_file, true);
+                                    }
+                                    // Let numerically indexed variables of latter
+                                    // file _append_ to settings of previous file.
+                                    // Detect competing associative keys (and sub-keys)
+                                    // both having non-array value.
+                                    try {
+                                        foreach ($settings_in_file as $section => $list) {
+                                            if (empty($settings_in_path[$section])) {
+                                                $settings_in_path[$section] = $settings_in_file[$section];
+                                            }
+                                            else {
+                                                $settings_in_path[$section] = $utils->arrayMergeUniqueRecursive(
+                                                    $settings_in_path[$section],
+                                                    $settings_in_file[$section]
+                                                );
+                                            }
+                                        }
+                                    }
+                                    catch (KeyNonUniqueException $xcptn) {
+                                        throw new ConfigException(
+                                            'Competing associative keys (and sub-keys) both having non-array value'
+                                            . ' are illegal within same path[' . $path_name . ']: '
+                                            . $xcptn->getMessage()
+                                        );
+                                    }
                                 }
-                                // Let numerically indexed variables of latter
-                                // file _append_ to settings of previous file.
-                                $settings_in_path = $utils->arrayMergeRecursive($settings_in_path, $settings_in_file);
                             }
                         }
-                    } else {
+                    }
+                    // Flat non-sectioned; sections ignored.
+                    else {
                         $ini = trim(file_get_contents($path_file));
                         if ($this->escapeSourceKeys) {
                             $ini = $utils->escapeIniKeys($ini);
@@ -498,6 +524,9 @@ abstract class IniConfigBase extends Explorable
                         }
                         // Let numerically indexed variables of latter
                         // file _append_ to settings of previous file.
+                        // Allow competing associative keys (and sub-keys)
+                        // to override (because we don't care; non-sectional
+                        // mode is toy mode).
                         $settings_in_path = $utils->arrayMergeRecursive($settings_in_path, $settings_in_file);
                     }
                 }
@@ -505,9 +534,10 @@ abstract class IniConfigBase extends Explorable
                     if (!$collection) {
                         $collection =& $settings_in_path;
                         unset($settings_in_path);
-                    } else {
+                    }
+                    else {
                         // Let variables of latter path _override_ settings
-                        // of previous paths.
+                        // of previous paths, unconditionally.
                         $collection = array_replace_recursive(
                             $collection,
                             $settings_in_path
@@ -573,12 +603,8 @@ abstract class IniConfigBase extends Explorable
         } catch (\Throwable $xc) {
             // Fail gracefully, if:
             // + building via cache candidate (safe mode, sort of)
-            // + it's an ini parse error
             // + there's a logger
-            if (
-                $build_cache_candidate
-                && $xc instanceof \SimpleComplex\Utils\Exception\ParseIniException
-            ) {
+            if ($build_cache_candidate) {
                 $container = Dependency::container();
                 if ($container->has('logger')) {
                     /** @var \Psr\Log\LoggerInterface $logger */

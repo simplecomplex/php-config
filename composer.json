@@ -13,7 +13,7 @@
     ],
     "require": {
         "php": ">=7.0",
-        "simplecomplex/utils": "^1.2 || dev-develop",
+        "simplecomplex/utils": "^1.6.1 || dev-develop",
         "simplecomplex/cache": "^1.1 || dev-develop"
     },
     "suggest": {
