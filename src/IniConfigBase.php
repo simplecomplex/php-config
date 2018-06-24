@@ -63,6 +63,17 @@ abstract class IniConfigBase extends Explorable
     const CACHE_KEY_LONG = false;
 
     /**
+     * Illegal config store names, and why they are illegal.
+     *
+     * @var string[]
+     */
+    const NAME_ILLEGALS = [
+        'example' => 'examples of .ini files have extension .[store-name].example.ini',
+        'ini-source-packages' =>
+            'lists of packages providing .ini files have extension .[store-name].ini-source-packages.ini',
+    ];
+
+    /**
      * @var string
      */
     protected $name;
@@ -280,7 +291,12 @@ abstract class IniConfigBase extends Explorable
     public function __construct(string $name, array $paths = [])
     {
         if (!ConfigKey::validate($name)) {
-            throw new InvalidArgumentException('Arg name is not valid, name[' . $name . '].');
+            throw new InvalidArgumentException('Arg name[' . $name . '] is invalid.');
+        }
+        if (isset(static::NAME_ILLEGALS[$name])) {
+            throw new InvalidArgumentException(
+                'Arg name[' . $name . '] is illegal because '. static::NAME_ILLEGALS[$name] . '.'
+            );
         }
         $this->name = $name;
 
@@ -437,43 +453,37 @@ abstract class IniConfigBase extends Explorable
 
         // Discovery mode: the base path contains list of packages-by-vendor
         // which contains relevant ini-files.
-        $discovery_file = null;
+        $ini_sources_file = null;
         if (!empty($this->paths['base'])) {
-            $discovery_file = $utils->resolvePath(
-                // ../conf/ini/base/config.global.discover-ini-source-packages.ini
-                $this->paths['base'] . '/config.' . $this->name . '.discover-ini-source-packages.ini'
+            $ini_sources_file = $utils->resolvePath(
+                // ../conf/ini/base/config.global.ini-source-packages.ini
+                $this->paths['base'] . '/config.' . $this->name . '.ini-source-packages.ini'
             );
-            if (file_exists($discovery_file) && is_file($discovery_file)) {
-                $discovery_info = $utils->parseIniFile($discovery_file, true, true);
-                if (empty($discovery_info['vendor-dir'])) {
+            if (file_exists($ini_sources_file) && is_file($ini_sources_file)) {
+                $ini_sources = $utils->parseIniFile($ini_sources_file, true, true);
+                if (!isset($ini_sources['packages-by-vendors'])) {
                     throw new ConfigException(
-                        'Config discovery mode package list file[' . $discovery_file . '] key \'vendor-dir\' is '
-                        . (isset($discovery_info['vendor-dir']) ? 'empty' : 'missing') . '.'
-                    );
-                }
-                if (!isset($discovery_info['packages-by-vendors'])) {
-                    throw new ConfigException(
-                        'Config discovery mode package list file[' . $discovery_file
+                        'Config discovery mode package list file[' . $ini_sources_file
                         . '] section \'packages-by-vendors\' is missing.'
                     );
                 }
-                if ($discovery_info['packages-by-vendors']) {
-                    $vendor_dir = trim($discovery_info['vendor-dir'], '/');
+                if ($ini_sources['packages-by-vendors']) {
+                    $vendor_path = $utils->documentRoot() . '/' . $utils->vendorDir();
                     $files = (new PathList(''))->includeExtensions($this->fileExtensions);
-                    foreach ($discovery_info['packages-by-vendors'] as $vendor => $packages) {
+                    foreach ($ini_sources['packages-by-vendors'] as $vendor => $packages) {
                         if ($packages) {
                             $files->reset();
                             if ($packages === '*') {
-                                $files->path($vendor_dir . '/' . $vendor)->find();
+                                $files->path($vendor_path . '/' . $vendor)->find();
                             }
                             elseif (is_array($packages)) {
                                 foreach ($packages as $package) {
-                                    $files->path($vendor_dir . '/' . $vendor . '/' . $package)->find();
+                                    $files->path($vendor_path . '/' . $vendor . '/' . $package)->find();
                                 }
                             }
                             else {
                                 throw new ConfigException(
-                                    'Config discovery mode package list file[' . $discovery_file
+                                    'Config discovery mode package list file[' . $ini_sources_file
                                     . '] section \'packages-by-vendors\' vendor key[' . $vendor
                                     . '] is neither wildcard string * nor array.'
                                 );
@@ -483,7 +493,7 @@ abstract class IniConfigBase extends Explorable
                                 if ($verbose && $cli_env) {
                                     $cli_env->echoMessage(
                                         'Discovered .ini sources under vendor[' . $vendor . ']:' . "\n"
-                                        . join("\n", $files->getArrayCopy())
+                                        . join("\n", $files->listDocumentRootReplaced())
                                     );
                                 }
                                 if (!$collection) {
@@ -534,7 +544,7 @@ abstract class IniConfigBase extends Explorable
                 if ($verbose && $cli_env) {
                     $cli_env->echoMessage(
                         'Found .ini sources in path[' . $path_name . ']:' . "\n"
-                        . join("\n", $files->getArrayCopy())
+                        . join("\n", $files->listDocumentRootReplaced())
                     );
                 }
                 $settings_in_path = $this->readFromPath($path_name, $files);
@@ -560,8 +570,8 @@ abstract class IniConfigBase extends Explorable
             if (!$n_files) {
                 throw new ConfigException(
                     'Found no configuration files at all, looking for extensions[' . join(', ', $this->fileExtensions)
-                    . ']' . (!$discovery_file ? '' : (' in packages defined by discovery mode file['
-                    . $discovery_file . '] and')) . ' in paths[' . join(', ', $this->paths) . '].'
+                    . ']' . (!$ini_sources_file ? '' : (' in packages defined by ini-source-packages file['
+                    . $ini_sources_file . '] and')) . ' in paths[' . join(', ', $this->paths) . '].'
                 );
             }
             throw new ConfigException(
@@ -572,12 +582,12 @@ abstract class IniConfigBase extends Explorable
     }
 
     /**
-     * @param string $path_name
+     * @param string|int $path_name
      * @param PathList $files
      *
      * @return array
      */
-    protected function readFromPath(string $path_name, PathList $files)
+    protected function readFromPath($path_name, PathList $files)
     {
         $utils = Utils::getInstance();
 
