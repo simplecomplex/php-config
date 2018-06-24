@@ -5,6 +5,7 @@ SimpleComplex/Config 1.x, 2018-06-24
   vendor-dir; uses Utils vendorDir() instead.
 - Path names are certainly allowed to be integers; because the path list may
   well be numerically indexed list.
+- Release 2.0.
 
 SimpleComplex/Config 1.x, 2018-06-23
 ------------------------------------

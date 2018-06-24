@@ -1,0 +1,70 @@
+#!/bin/bash -e
+# Stop (don't exit) on error.
+#-------------------------------------------------------------------------------
+### Package: simplecomplex/config
+### PHP source dir: backend
+
+## PLACE YOURSELF IN THE SITE'S DOCUMENT ROOT.
+#cd [document root]
+
+## Script arguments:
+# None.
+
+
+# Set document root var.
+doc_root=`pwd`
+
+# Set conf dir var.
+cd ../
+path_conf=`pwd`'/conf'
+cd ${doc_root}
+
+# Set private files dir var.
+cd ../
+path_private=`pwd`'/private'
+cd ${doc_root}
+
+# Set backend and frontend dir vars.
+path_backend=${doc_root}'/backend'
+
+
+### CONFIGURATION ##############################################################
+
+### Clear configuration dir ../conf.
+if [ ! -w ${path_conf} ]; then
+    if [ ! -d ${path_conf} ]; then
+        echo -e "\033[01;31m[error]\033[0m Directory ../conf doesn't exist."
+        exit
+    else
+        echo -e "\033[01;31m[error]\033[0m Directory ../conf is not writable for me, ${USER}."
+        exit
+    fi
+fi
+find ${path_conf} -mindepth 1 -delete
+sleep 1
+mkdir -p ${path_conf}'/ini/base'
+mkdir -p ${path_conf}'/ini/override'
+
+### Clear private files dir ../private.
+if [ ! -w ${path_private} ]; then
+    if [ ! -d ${path_private} ]; then
+        echo -e "\033[01;31m[error]\033[0m Directory ../private doesn't exist."
+        exit
+    else
+        echo -e "\033[01;31m[error]\033[0m Directory ../private is not writable for me, ${USER}."
+        exit
+    fi
+fi
+find ${path_private} -mindepth 1 -delete
+sleep 1
+
+
+## Copy discovery .ini source packages lists.
+cp ${path_backend}'/vendor/simplecomplex/config/config-ini/config.global.ini-source-packages.ini' ${path_conf}'/ini/base'
+cp ${path_backend}'/vendor/simplecomplex/config/config-ini/config.frontend.ini-source-packages.ini' ${path_conf}'/ini/base'
+
+
+### Success ############################
+echo -e "\n\033[01;32m[success]\033[0m"' simplecomplex/config setup successfully.'
+
+#### END #######################################################################
