@@ -1,4 +1,4 @@
-SimpleComplex/Config 1.x, 2018-06-24
+SimpleComplex/Config 2.x, 2018-06-24
 ------------------------------------
 - Config store names 'example' and 'ini-source-packages' are now illegal.
 - Renamed ini source packages lists' extension, and they shall no longer contain
@@ -7,7 +7,7 @@ SimpleComplex/Config 1.x, 2018-06-24
   well be numerically indexed list.
 - Release 2.0.
 
-SimpleComplex/Config 1.x, 2018-06-23
+SimpleComplex/Config 2.x, 2018-06-23
 ------------------------------------
 - Competing associative keys (and sub-keys) both having non-array value
   within same ini path (base, override) is now illegal; because there can't
