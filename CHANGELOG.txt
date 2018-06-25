@@ -1,3 +1,9 @@
+SimpleComplex/Config 2.x, 2018-06-25
+------------------------------------
+- Discovery mode require that .ini files are placed in parent dirs 'config-ini'.
+- Discovery mode configurable (and more explicit).
+- Release 2.0.1.
+
 SimpleComplex/Config 2.x, 2018-06-24
 ------------------------------------
 - Config store names 'example' and 'ini-source-packages' are now illegal.

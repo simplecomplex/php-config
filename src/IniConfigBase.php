@@ -173,6 +173,35 @@ abstract class IniConfigBase extends Explorable
      */
     protected $fileExtensions;
 
+    /**
+     * Discovery mode filename of .ini source packages file.
+     *
+     * The file must be placed in the store's (verbatim) 'base' path directory.
+     * See this package's example file
+     * config-ini/config.global.ini-source-packages.example.ini.
+     *
+     * Must contain '[store-name]', which gets replaced by instance $name.
+     *
+     * @see IniConfigBase::readFromSources()
+     *
+     * @var string
+     */
+    const DISCOVERY_SOURCE_PACKAGES_FILENAME = 'config.[store-name].ini-source-packages.ini';
+
+    /**
+     * Discovery mode requires that every .ini file of a source package
+     * is placed in a directory by this name.
+     *
+     * Empty if no such requirement.
+     *
+     * @see PathList::includeParents()
+     *
+     * @see IniConfigBase::readFromSources()
+     *
+     * @var string
+     */
+    const DISCOVERY_INI_PARENT_DIRNAME = 'config-ini';
+
 
     // Explorable.--------------------------------------------------------------
 
@@ -451,13 +480,14 @@ abstract class IniConfigBase extends Explorable
         $collection = [];
         $n_files = 0;
 
-        // Discovery mode: the base path contains list of packages-by-vendor
-        // which contains relevant ini-files.
+        // Discovery mode: the base path contains a list of packages-by-vendor
+        // which contain relevant ini-files, placed in a 'config-ini' dir.
         $ini_sources_file = null;
         if (!empty($this->paths['base'])) {
             $ini_sources_file = $utils->resolvePath(
                 // ../conf/ini/base/config.global.ini-source-packages.ini
-                $this->paths['base'] . '/config.' . $this->name . '.ini-source-packages.ini'
+                $this->paths['base'] . '/'
+                . str_replace('[store-name]', $this->name, static::DISCOVERY_SOURCE_PACKAGES_FILENAME)
             );
             if (file_exists($ini_sources_file) && is_file($ini_sources_file)) {
                 $ini_sources = $utils->parseIniFile($ini_sources_file, true, true);
@@ -470,9 +500,12 @@ abstract class IniConfigBase extends Explorable
                 if ($ini_sources['packages-by-vendors']) {
                     $vendor_path = $utils->documentRoot() . '/' . $utils->vendorDir();
                     $files = (new PathList(''))->includeExtensions($this->fileExtensions);
+                    if (static::DISCOVERY_INI_PARENT_DIRNAME) {
+                        $files->includeParents([static::DISCOVERY_INI_PARENT_DIRNAME]);
+                    }
                     foreach ($ini_sources['packages-by-vendors'] as $vendor => $packages) {
                         if ($packages) {
-                            $files->reset();
+                            $files->clear();
                             if ($packages === '*') {
                                 $files->path($vendor_path . '/' . $vendor)->find();
                             }
@@ -511,14 +544,32 @@ abstract class IniConfigBase extends Explorable
                                 }
                             }
                             elseif ($verbose && $cli_env) {
-                                $cli_env->echoMessage('Discovered no .ini sources under vendor[' . $vendor . '].');
+                                $cli_env->echoMessage(
+                                    'Discovered no .ini sources under vendor[' . $vendor . ']'
+                                    . (!static::DISCOVERY_INI_PARENT_DIRNAME ? '.' :
+                                        ' in dir(s) named[' . static::DISCOVERY_INI_PARENT_DIRNAME . '].')
+                                );
                             }
                         }
                     }
                 }
+                elseif ($verbose && $cli_env) {
+                    $cli_env->echoMessage(
+                        'Discovered no .ini source vendors because empty packages-by-vendors section'
+                        . ' in .ini source packages file[' . $ini_sources_file . '].'
+                    );
+                }
+            }
+            elseif ($verbose && $cli_env) {
+                $cli_env->echoMessage(
+                    'Discovered no .ini source vendors because no .ini source packages file['
+                    . $ini_sources_file . '].'
+                );
             }
         }
 
+        // Ordinary path mode; 'base' and 'override', or custom (possibly even
+        // numerically indexed) paths.
         foreach ($this->paths as $path_name => $path) {
             if (!$path) {
                 continue;
@@ -582,6 +633,8 @@ abstract class IniConfigBase extends Explorable
     }
 
     /**
+     * @see IniConfigBase::readFromSources()
+     *
      * @param string|int $path_name
      * @param PathList $files
      *
