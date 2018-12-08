@@ -620,13 +620,15 @@ abstract class IniConfigBase extends Explorable
         if (!$allowNone && !$collection) {
             if (!$n_files) {
                 throw new ConfigException(
-                    'Found no configuration files at all, looking for extensions[' . join(', ', $this->fileExtensions)
+                    'Found no configuration files at all for config[' . $this->name
+                    . '] when reading from sources for, looking for extensions[' . join(', ', $this->fileExtensions)
                     . ']' . (!$ini_sources_file ? '' : (' in packages defined by ini-source-packages file['
-                    . $ini_sources_file . '] and')) . ' in paths[' . join(', ', $this->paths) . '].'
+                        . $ini_sources_file . '] and'))
+                    . ' in paths[' . join(', ', $this->paths) . '].'
                 );
             }
             throw new ConfigException(
-                'Found no configuration item at all.'
+                'Found no configuration item at all for config[' . $this->name . '] when reading from sources.'
             );
         }
         return $collection;
@@ -749,6 +751,7 @@ abstract class IniConfigBase extends Explorable
      *      False: no configuration variables found in .ini files of the paths.
      *
      * @throws ConfigException
+     *      Invalid section+delimiter+key key.
      *      Propagated, see readFromSources().
      * @throws \Throwable
      *      Propagated, from cache store.
@@ -819,11 +822,23 @@ abstract class IniConfigBase extends Explorable
                         // Check that the final key isn't too long.
                         if (!static::CACHE_KEY_LONG) {
                             if (!ConfigKey::validate($concat_key)) {
+                                if (strlen($concat_key) > ConfigKey::VALID_LENGTH_MAX) {
+                                    throw new ConfigException(
+                                        'Concatted section+delimiter+key key length ' . strlen($concat_key) . ' exceeds max '
+                                        . ConfigKey::VALID_LENGTH_MAX . ', concatted[' . $concat_key . '].'
+                                    );
+                                }
                                 throw new ConfigException(
                                     'Concatted section+delimiter+key key is not valid, concatted[' . $concat_key . '].'
                                 );
                             }
                         } elseif (!ConfigKeyLong::validate($concat_key)) {
+                            if (strlen($concat_key) > ConfigKeyLong::VALID_LENGTH_MAX) {
+                                throw new ConfigException(
+                                    'Concatted section+delimiter+key key length ' . strlen($concat_key) . ' exceeds max '
+                                    . ConfigKeyLong::VALID_LENGTH_MAX . ', concatted[' . $concat_key . '].'
+                                );
+                            }
                             throw new ConfigException(
                                 'Concatted section+delimiter+key key is not valid, concatted[' . $concat_key . '].'
                             );

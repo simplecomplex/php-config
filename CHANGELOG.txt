@@ -1,3 +1,9 @@
+SimpleComplex/Config 2.x, 2018-12-08
+------------------------------------
+- Slightly better error messages when refreshing non-existent config store,
+  and when using too long keys.
+- Release 2.1.1.
+
 SimpleComplex/Config 2.x, 2018-07-29
 ------------------------------------
 - Register CLI command provider in document root .ini file.
