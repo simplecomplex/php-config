@@ -1,3 +1,8 @@
+SimpleComplex/Config 2.x, 2018-12-15
+------------------------------------
+- CLI command config-set-sub to set config sub item; an array|object bucket.
+- Release 2.1.2.
+
 SimpleComplex/Config 2.x, 2018-12-08
 ------------------------------------
 - Slightly better error messages when refreshing non-existent config store,

@@ -13,6 +13,7 @@ use SimpleComplex\Utils\Interfaces\CliCommandInterface;
 use SimpleComplex\Utils\CliEnvironment;
 use SimpleComplex\Utils\CliCommand;
 use SimpleComplex\Utils\Dependency;
+use SimpleComplex\Utils\Utils;
 use SimpleComplex\Cache\CacheBroker;
 
 /**
@@ -116,6 +117,33 @@ class CliConfig implements CliCommandInterface
                     'key' => 'Config item key.',
                     'value' => 'Value to set, please enclose in single quotes'
                     . "\n" . 'when not non-negative int/float or boolean int.',
+                ],
+                [
+                    'int' => 'Set as integer.',
+                    'float' => 'Set as float.',
+                    'bool' => 'Set as boolean, use 0|1|true|false for arg value.',
+                    'json' => 'Arg value is JSON-encoded.',
+                    'array' => '(with \'json\' option) Set object value as array.',
+                ],
+                [
+                    'i' => 'int',
+                    'f' => 'float',
+                    'b' => 'bool',
+                    'j' => 'json',
+                    'r' => 'array',
+                ]
+            ),
+            new CliCommand(
+                $this,
+                static::COMMAND_PROVIDER_ALIAS . '-set-sub',
+                'Set a config sub item, an array|object bucket.',
+                [
+                    'store' => 'Config store name.',
+                    'section' => 'Config section.',
+                    'key' => 'Config item key.',
+                    'sub' => 'Config sub item key.',
+                    'value' => 'Value to set, please enclose in single quotes'
+                        . "\n" . 'when not non-negative int/float or boolean int.',
                 ],
                 [
                     'int' => 'Set as integer.',
@@ -568,6 +596,185 @@ class CliConfig implements CliCommandInterface
      * @return void
      *      Exits.
      */
+    protected function cmdSetSub() /*: void*/
+    {
+        /**
+         * @see simplecomplex_config_cli()
+         */
+        $container = Dependency::container();
+        // Validate input. ---------------------------------------------
+        $store = '';
+        if (empty($this->command->arguments['store'])) {
+            $this->command->inputErrors[] = !isset($this->command->arguments['store']) ? 'Missing \'store\' argument.' :
+                'Empty \'store\' argument.';
+        } else {
+            $store = $this->command->arguments['store'];
+            if (!ConfigKey::validate($store)) {
+                $this->command->inputErrors[] = 'Invalid \'store\' argument.';
+            }
+        }
+        $section = '';
+        if (empty($this->command->arguments['section'])) {
+            $this->command->inputErrors[] = !isset($this->command->arguments['section']) ?
+                'Missing \'section\' argument.' : 'Empty \'section\' argument.';
+        } else {
+            $section = $this->command->arguments['section'];
+            if (!ConfigKey::validate($section)) {
+                $this->command->inputErrors[] = 'Invalid \'section\' argument.';
+            }
+        }
+        $key = '';
+        if (empty($this->command->arguments['key'])) {
+            $this->command->inputErrors[] = !isset($this->command->arguments['key']) ?
+                'Missing \'key\' argument.' : 'Empty \'key\' argument.';
+        } else {
+            $key = $this->command->arguments['key'];
+            if (!ConfigKey::validate($key)) {
+                $this->command->inputErrors[] = 'Invalid \'key\' argument.';
+            }
+        }
+        $sub = '';
+        if (empty($this->command->arguments['sub'])) {
+            $this->command->inputErrors[] = !isset($this->command->arguments['sub']) ?
+                'Missing \'sub\' argument.' : 'Empty \'sub\' argument.';
+        } else {
+            $sub = $this->command->arguments['sub'];
+        }
+
+        $converted_value = $value = '';
+        $int = !empty($this->command->options['int']);
+        $float = !empty($this->command->options['float']);
+        $bool = !empty($this->command->options['bool']);
+        $json = !empty($this->command->options['json']);
+        $array = $json && !empty($this->command->options['array']);
+
+        if (((int) $int + (int) $float + (int) $bool + (int) $json) > 1) {
+            $this->command->inputErrors[] = 'Cannot use more than a single value type option.';
+        } else {
+            if (!isset($this->command->arguments['value'])) {
+                $this->command->inputErrors[] = !isset($this->command->arguments['value']) ?
+                    'Missing \'value\' argument.' : 'Empty \'value\' argument.';
+            } else {
+                $converted_value = $value = $this->command->arguments['value'];
+                if ($int) {
+                    if (!ctype_digit('' . $value)) {
+                        $this->command->inputErrors[] = 'Arg value[' . $value . '] is not an integer.';
+                    } else {
+                        $converted_value = (int) $value;
+                    }
+                } elseif ($float) {
+                    if (!is_numeric($value)) {
+                        $this->command->inputErrors[] = 'Arg value[' . $value . '] is not a float.';
+                    } else {
+                        $converted_value = (float) $value;
+                    }
+                } elseif ($bool) {
+                    switch ($value) {
+                        case '0':
+                        case 'false':
+                            $converted_value = false;
+                            break;
+                        case '1':
+                        case 'true':
+                            $converted_value = true;
+                            break;
+                        default:
+                            $this->command->inputErrors[] = 'Arg value[' . $value . '] is not 0|1|true|false.';
+                    }
+                } elseif ($json) {
+                    $converted_value = json_decode($value);
+                    if ($converted_value === null) {
+                        $this->command->inputErrors[] = 'Arg value[' . $value . '] is not valid JSON.';
+                    }
+                    elseif ($array && is_object($converted_value)) {
+                        $converted_value = (array) $converted_value;
+                    }
+                }
+            }
+        }
+
+        if ($this->command->inputErrors) {
+            foreach ($this->command->inputErrors as $msg) {
+                $this->environment->echoMessage(
+                    $this->environment->format($msg, 'hangingIndent'),
+                    'notice'
+                );
+            }
+            // This command's help text.
+            $this->environment->echoMessage("\n" . $this->command);
+            exit;
+        }
+        // Display command and the arg values used.---------------------
+        if (!$this->command->preConfirmed) {
+            $this->environment->echoMessage(
+                $this->environment->format(
+                    $this->environment->format($this->command->name, 'emphasize')
+                    . "\n" . 'store: ' . $store
+                    . "\n" . 'section: ' . $section
+                    . "\n" . 'key: ' . $key
+                    . "\n" . 'sub: ' . $sub
+                    . "\n" . 'value: ' . addcslashes($value, "\0..\37")
+                    . (!$this->command->options ? '' : ("\n--" . join(' --', array_keys($this->command->options)))),
+                    'hangingIndent'
+                )
+            );
+        }
+        // Request confirmation, unless user used the --yes/-y option.
+        if (
+            !$this->command->preConfirmed
+            && !$this->environment->confirm(
+                'Set that config sub item? Type \'yes\' or \'y\' to continue:',
+                ['yes', 'y'],
+                '',
+                'Aborted setting config sub item.'
+            )
+        ) {
+            exit;
+        }
+        // Check if the command is doable.------------------------------
+        // Nothing to check here.
+        if ($store == 'global' && $container->has('config')) {
+            /** @var IniSectionedConfig $config_store */
+            $config_store = $container->get('config');
+        } else {
+            $config_class = static::CLASS_CONFIG;
+            /** @var IniSectionedConfig $config_store */
+            $config_store = new $config_class($store);
+        }
+        // Do it.
+        $deep_array = $config_store->get($section, $key, []);
+        if (!is_array($deep_array) && !is_object($deep_array)) {
+            $this->environment->echoMessage(
+                'Cannot set config sub item because existing item key[' . $key . '] type[' . Utils::getType($deep_array)
+                . '] is not array|object, store[' . $store
+                . '] section[' . $section . '] key[' . $key . '] sub[' . $sub . '] value[' . addcslashes($value, "\0..\37") . '].',
+                'error'
+            );
+            exit;
+        }
+        $deep_array[$sub] = $converted_value;
+
+        if (!$config_store->set($section, $key, $deep_array)) {
+            $this->environment->echoMessage(
+                'Failed to set config sub item store[' . $store
+                . '] section[' . $section . '] key[' . $key . '] sub[' . $sub . '] value[' . addcslashes($value, "\0..\37") . '].',
+                'error'
+            );
+        } elseif (!$this->command->silent) {
+            $this->environment->echoMessage(
+                'Set config sub item store[' . $store
+                . '] section[' . $section . '] key[' . $key . '] sub[' . $sub . '] value[' . addcslashes($value, "\0..\37") . ']'
+                . ($json && $array ? ' as array' : '') . '.',
+                'success'
+            );
+        }
+        exit;
+    }
+
+    /**
+     * @return void
+     *      Exits.
+     */
     protected function cmdDelete() /*: void*/
     {
         /**
@@ -911,6 +1118,9 @@ class CliConfig implements CliCommandInterface
                 return $this->cmdGet();
             case static::COMMAND_PROVIDER_ALIAS . '-set':
                 $this->cmdSet();
+                exit;
+            case static::COMMAND_PROVIDER_ALIAS . '-set-sub':
+                $this->cmdSetSub();
                 exit;
             case static::COMMAND_PROVIDER_ALIAS . '-delete':
                 $this->cmdDelete();
