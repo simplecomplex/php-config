@@ -134,28 +134,28 @@ $whatever = $config->get('some-section', 'some-key', 'the default value');
 
 ```bash
 # List all config commands and their help.
-php cli.phpsh config -h
+php cli.php config -h
 # One command's help.
-php cli.phpsh config-xxx -h
+php cli.php config-xxx -h
 
 # List existing config stores.
-php cli.phpsh config-list-stores
+php cli.php config-list-stores
 
 # Display/get value of a config item.
-php cli.phpsh config-get store section key
+php cli.php config-get store section key
 
 # Set a config item.
-php cli.phpsh config-set store section key value
+php cli.php config-set store section key value
 
 # Delete a config item.
-php cli.phpsh config-delete store section key
+php cli.php config-delete store section key
 
 # Refresh a config store from .ini file sources.
 # The fresh store gets applied atomically, when fully built.
-php cli.phpsh config-refresh store
+php cli.php config-refresh store
 
 # Export a config store as JSON to a file.
-php cli.phpsh config-export store target-path-and-file
+php cli.php config-export store target-path-and-file
 ```
 
 ### Installation ###

@@ -30,8 +30,8 @@ use SimpleComplex\Cache\CacheBroker;
  *
  * @code
  * # CLI
- * cd vendor/simplecomplex/config/src/cli
- * php cli.phpsh config -h
+ * cd vendor/simplecomplex/utils/src/cli
+ * php cli.php config -h
  * @endcode
  *
  * @package SimpleComplex\Config
