@@ -1,3 +1,8 @@
+SimpleComplex/Config 2.x, 2019-08-12
+------------------------------------
+- Clarify propagated cache exceptions - Psr\SimpleCache\InvalidArgumentException
+  is _not_ an exception (only an interface).
+
 SimpleComplex/Config 2.x, 2018-12-15
 ------------------------------------
 - CLI command config-set-sub to set config sub item; an array|object bucket.

@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Config
  * @link      https://github.com/simplecomplex/php-config
- * @copyright Copyright (c) 2017 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2017-2019 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/php-config/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -83,7 +83,7 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      *
      * @return mixed|null
      *
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      */
     public function get(string $section, string $key, $default = null)
@@ -111,7 +111,7 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      *
      * @throws InvalidArgumentException
      *      Bad key.
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      * @throws RuntimeException
      *      Cache store failed silently.
@@ -155,7 +155,7 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      *
      * @throws InvalidArgumentException
      *      Bad key.
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      * @throws RuntimeException
      *      Cache store failed silently.
@@ -202,7 +202,7 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      *
      * @throws \TypeError
      *      Arg keys not array|object.
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      */
     public function getMultiple(string $section, $keys, $default = null) : array
@@ -236,7 +236,7 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      *      Arg values not array|object.
      * @throws InvalidArgumentException
      *      Bad key.
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      * @throws RuntimeException
      *      Cache store failed silently.
@@ -288,6 +288,8 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      * @param string $key
      *
      * @return bool
+     *
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     public function has(string $section, string $key) : bool
     {
@@ -309,6 +311,8 @@ class IniSectionedConfig extends IniConfigBase implements SectionedConfigInterfa
      *
      * @return bool
      *      False: section doesn't exist.
+     *
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     public function remember(string $section) : bool
     {

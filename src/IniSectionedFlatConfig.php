@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Config
  * @link      https://github.com/simplecomplex/php-config
- * @copyright Copyright (c) 2017 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2017-2019 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/php-config/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -66,6 +66,7 @@ class IniSectionedFlatConfig extends IniConfigBase implements SectionedConfigInt
      * @see SectionedConfigInterface::get()
      *
      * @inheritdoc
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     public function get(string $section, string $key, $default = null)
     {
@@ -78,6 +79,7 @@ class IniSectionedFlatConfig extends IniConfigBase implements SectionedConfigInt
      * @see SectionedConfigInterface::set()
      *
      * @inheritdoc
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     public function set(string $section, string $key, $value) : bool
     {
@@ -104,6 +106,7 @@ class IniSectionedFlatConfig extends IniConfigBase implements SectionedConfigInt
      * @see SectionedConfigInterface::delete()
      *
      * @inheritdoc
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     public function delete(string $section, string $key) : bool
     {
@@ -123,6 +126,7 @@ class IniSectionedFlatConfig extends IniConfigBase implements SectionedConfigInt
      * @see SectionedConfigInterface::getMultiple()
      *
      * @inheritdoc
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     public function getMultiple(string $section, $keys, $default = null)
     {
@@ -140,6 +144,7 @@ class IniSectionedFlatConfig extends IniConfigBase implements SectionedConfigInt
      * @see SectionedConfigInterface::setMultiple()
      *
      * @inheritdoc
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     public function setMultiple(string $section, $values) : bool
     {
@@ -159,6 +164,7 @@ class IniSectionedFlatConfig extends IniConfigBase implements SectionedConfigInt
      * @see SectionedConfigInterface::has()
      *
      * @inheritdoc
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     public function has(string $section, string $key) : bool
     {

@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Config
  * @link      https://github.com/simplecomplex/php-config
- * @copyright Copyright (c) 2014-2017 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2017-2019 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/php-config/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -305,6 +305,8 @@ class CliConfig implements CliCommandInterface
     /**
      * @return mixed
      *      Exits if no/falsy option 'get'.
+     *
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     protected function cmdGet()
     {
@@ -436,6 +438,8 @@ class CliConfig implements CliCommandInterface
     /**
      * @return void
      *      Exits.
+     *
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     protected function cmdSet() /*: void*/
     {
@@ -595,6 +599,8 @@ class CliConfig implements CliCommandInterface
     /**
      * @return void
      *      Exits.
+     *
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     protected function cmdSetSub() /*: void*/
     {
@@ -774,6 +780,8 @@ class CliConfig implements CliCommandInterface
     /**
      * @return void
      *      Exits.
+     *
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     protected function cmdDelete() /*: void*/
     {
@@ -879,6 +887,9 @@ class CliConfig implements CliCommandInterface
      *
      * @return void
      *      Exits.
+     *
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
+     * @throws \Throwable
      */
     protected function cmdRefresh() /*: void*/
     {
@@ -970,6 +981,8 @@ class CliConfig implements CliCommandInterface
      *
      * @return void
      *      Exits.
+     *
+     * @throws \Throwable
      */
     protected function cmdExport() /*: void*/
     {
@@ -1105,6 +1118,8 @@ class CliConfig implements CliCommandInterface
      * @throws \LogicException
      *      If the command mapped by CliEnvironment
      *      isn't this provider's command.
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
+     * @throws \Throwable
      */
     public function executeCommand(CliCommand $command)
     {

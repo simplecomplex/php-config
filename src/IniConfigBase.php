@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Config
  * @link      https://github.com/simplecomplex/php-config
- * @copyright Copyright (c) 2017 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2017-2019 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/php-config/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -314,6 +314,7 @@ abstract class IniConfigBase extends Explorable
      * @throws LogicException
      *      Propagated; current (or parent) class declares a fixed set of path
      *      names but doesn't declare equivalent PATH_DEFAULTS.
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      * @throws \Throwable
      *      Propagated.
      */
@@ -753,6 +754,7 @@ abstract class IniConfigBase extends Explorable
      * @throws ConfigException
      *      Invalid section+delimiter+key key.
      *      Propagated, see readFromSources().
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      * @throws \Throwable
      *      Propagated, from cache store.
      */
@@ -896,6 +898,7 @@ abstract class IniConfigBase extends Explorable
      *      Failure to encode as format.
      *      Failure to write to file.
      * @throws \Exception
+     * @throws \Throwable
      *      Propagated, various kinds, from Utils::resolvePath().
      */
     public function export(string $targetFile, array $options = []) /*: void*/

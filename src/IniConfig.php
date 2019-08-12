@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Config
  * @link      https://github.com/simplecomplex/php-config
- * @copyright Copyright (c) 2017 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2017-2019 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/php-config/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -53,7 +53,7 @@ class IniConfig extends IniConfigBase implements ConfigInterface
      *
      * @return mixed|null
      *
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      */
     public function get(string $key, $default = null)
@@ -75,7 +75,7 @@ class IniConfig extends IniConfigBase implements ConfigInterface
      *
      * @throws InvalidArgumentException
      *      Bad key.
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      * @throws RuntimeException
      *      Cache store failed silently.
@@ -104,7 +104,7 @@ class IniConfig extends IniConfigBase implements ConfigInterface
      *
      * @return bool
      *
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      * @throws RuntimeException
      *      Cache store failed silently.
@@ -127,11 +127,11 @@ class IniConfig extends IniConfigBase implements ConfigInterface
      * @param array|object $keys
      * @param mixed $default
      *
-     * @return array
+     * @return array|iterable
      *
      * @throws \TypeError
      *      Arg keys not array|object.
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      */
     public function getMultiple($keys, $default = null) : array
@@ -154,7 +154,7 @@ class IniConfig extends IniConfigBase implements ConfigInterface
      *      Arg values not array|object.
      * @throws InvalidArgumentException
      *      Bad key.
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      *      Propagated.
      * @throws RuntimeException
      *      Cache store failed silently.
@@ -188,6 +188,8 @@ class IniConfig extends IniConfigBase implements ConfigInterface
      * @param string $key
      *
      * @return bool
+     *
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      */
     public function has(string $key) : bool
     {
@@ -250,6 +252,8 @@ class IniConfig extends IniConfigBase implements ConfigInterface
      *      @var bool $useSourceSections
      *          Default: class default (USE_SOURCE_SECTIONS_DEFAULT) rules.
      * }
+     *
+     * @throws \InvalidArgumentException|\Psr\SimpleCache\InvalidArgumentException
      * @throws \Throwable
      *      Propagated.
      */
