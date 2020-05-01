@@ -730,6 +730,38 @@ abstract class IniConfigBase extends Explorable
     }
 
     /**
+     * Get all sections/keys.
+
+     * @param bool $fromSources
+     *      Truthy: read from sources paths' ini files.
+     *
+     * @return array
+     *
+     * @throws \Throwable
+     *      Propagated.
+     */
+    public function getAll(bool $fromSources = false) : array
+    {
+        if (!$fromSources) {
+            $collection = $this->cacheStore->export();
+            if ($this->sectionKeyDelimiter) {
+                $delim = $this->sectionKeyDelimiter;
+                $un_delimited = [];
+                foreach ($collection as $section_key => $value) {
+                    $sctn_ky = explode($delim, $section_key);
+                    $un_delimited[$sctn_ky[0]][$sctn_ky[1]] = $value;
+                }
+                $collection =& $un_delimited;
+            }
+        }
+        else {
+            $collection = $this->readFromSources();
+        }
+        ksort($collection);
+        return $collection;
+    }
+
+    /**
      * Builds fresh configuration from all .ini files in the base and override
      * paths (or any number of paths, if the concrete config class allows that).
      *
@@ -921,22 +953,7 @@ abstract class IniConfigBase extends Explorable
                 'Arg targetFile path is not a directory, targetFile[' . $targetFile . '], path[' . $target_path . '].');
         }
 
-        if (empty($options['fromSources'])) {
-            $collection = $this->cacheStore->export();
-            if ($this->sectionKeyDelimiter) {
-                $delim = $this->sectionKeyDelimiter;
-                $un_delimited = [];
-                foreach ($collection as $section_key => $value) {
-                    $sctn_ky = explode($delim, $section_key);
-                    $un_delimited[$sctn_ky[0]][$sctn_ky[1]] = $value;
-                }
-                $collection =& $un_delimited;
-            }
-        }
-        else {
-            $collection = $this->readFromSources();
-        }
-        ksort($collection);
+        $collection = $this->getAll(!empty($options['fromSources']));
 
         if ($this->useSourceSections) {
             // Fix that empty section must be object, not array; PHP json_encode()
